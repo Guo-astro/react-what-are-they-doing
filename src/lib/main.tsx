@@ -1,0 +1,306 @@
+"use client";
+
+import * as React from "react";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  ColumnFiltersState,
+  VisibilityState,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Star, StarOff } from "lucide-react";
+import {
+  computeZoneTime,
+  countryNames,
+  getStatus,
+  TimeZone,
+  timeZones,
+} from "./constants";
+
+// Utility functions (parseUTCOffset, computeZoneTime, parseTimeToMinutes, getStatus) remain unchanged...
+
+// Translations for UI labels
+type Language = "en" | "zh" | "ja";
+
+const translations: Record<Language, Record<string, string>> = {
+  en: {
+    country: "Country",
+    timezone: "Time Zone",
+    code: "Code",
+    start: "Start Time",
+    end: "End Time",
+    current: "Current Time",
+    title: "When They Work",
+  },
+  zh: {
+    country: "国家",
+    timezone: "时区",
+    code: "代码",
+    start: "工作开始时间",
+    end: "工作结束时间",
+    current: "当前时间",
+    title: "他们的工作时间",
+  },
+  ja: {
+    country: "国",
+    timezone: "タイムゾーン",
+    code: "コード",
+    start: "勤務開始時間",
+    end: "勤務終了時間",
+    current: "現在の時間",
+    title: "彼らの勤務時間",
+  },
+};
+
+export function TimeZoneDataTable() {
+  const [referenceDate, setReferenceDate] = React.useState<Date>(new Date());
+  const [language, setLanguage] = React.useState<Language>("en");
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [favorites, setFavorites] = React.useState<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+      setFavorites(new Set(JSON.parse(storedFavorites)));
+    }
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem("favorites", JSON.stringify(Array.from(favorites)));
+  }, [favorites]);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setReferenceDate(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const t = translations[language];
+
+  const toggleFavorite = (country: string) => {
+    setFavorites((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(country)) {
+        updated.delete(country);
+      } else {
+        updated.add(country);
+      }
+      return updated;
+    });
+  };
+
+  const columns = React.useMemo<ColumnDef<TimeZone>[]>(
+    () => [
+      {
+        id: "favorite",
+        header: "",
+        cell: ({ row }) => {
+          const zone = row.original;
+          const isFav = favorites.has(zone.country);
+          return (
+            <button onClick={() => toggleFavorite(zone.country)}>
+              {isFav ? (
+                <Star className="text-yellow-500" />
+              ) : (
+                <StarOff className="text-gray-400" />
+              )}
+            </button>
+          );
+        },
+        size: 50,
+        enableSorting: true,
+        enableFiltering: true,
+      },
+      {
+        id: "country",
+        header: t.country,
+        accessorFn: (row: TimeZone) => {
+          const info = countryNames[row.country];
+          return info ? info[language] || row.country : row.country;
+        },
+        enableSorting: true,
+        cell: ({ getValue }) => getValue(),
+        enableFiltering: true,
+      },
+      {
+        accessorKey: "utc",
+        header: t.timezone,
+        enableSorting: true,
+        enableFiltering: true,
+      },
+      {
+        accessorKey: "code",
+        header: t.code,
+        enableSorting: true,
+        enableFiltering: true,
+      },
+      {
+        accessorKey: "startTime",
+        header: t.start,
+        enableSorting: true,
+        enableFiltering: true,
+      },
+      {
+        accessorKey: "endTime",
+        header: t.end,
+        enableSorting: true,
+        enableFiltering: true,
+      },
+      {
+        id: "currentTime",
+        header: t.current,
+        cell: ({ row }) => {
+          const zone = row.original;
+          return computeZoneTime(zone.utc, referenceDate);
+        },
+        enableSorting: true,
+        enableFiltering: true,
+      },
+      {
+        id: "status",
+        header: "Status",
+        cell: ({ row }) => {
+          const zone = row.original;
+          const current = computeZoneTime(zone.utc, referenceDate);
+          const status = getStatus(zone, current);
+          return (
+            <span
+              className={`px-2 py-1 rounded-full text-sm ${status.colorClass}`}
+            >
+              {status.label}
+            </span>
+          );
+        },
+        enableSorting: true,
+        enableFiltering: true,
+      },
+    ],
+    [t, referenceDate, favorites, language]
+  );
+
+  const table = useReactTable({
+    data: timeZones,
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      columnVisibility,
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  return (
+    <div className="container mx-auto p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">{t.title}</h1>
+        <select
+          value={language}
+          onChange={(e) => setLanguage(e.target.value as Language)}
+          className="border p-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+        >
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+          <option value="ja">日本語</option>
+        </select>
+      </div>
+      <div className="flex items-center py-4">
+        <Input
+          placeholder="Filter country..."
+          value={(table.getColumn("country")?.getFilterValue() as string) ?? ""}
+          onChange={(e) =>
+            table.getColumn("country")?.setFilterValue(e.target.value)
+          }
+          className="max-w-sm"
+        />
+      </div>
+      <div className="rounded-md border overflow-auto">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id} className="px-4 py-2">
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="px-4 py-2">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
