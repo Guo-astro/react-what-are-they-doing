@@ -1,6 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   ColumnDef,
   flexRender,
@@ -21,7 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Star, StarOff } from "lucide-react";
 import {
@@ -32,9 +34,17 @@ import {
   timeZones,
 } from "./constants";
 
-// Utility functions (parseUTCOffset, computeZoneTime, parseTimeToMinutes, getStatus) remain unchanged...
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 
-// Translations for UI labels
 type Language = "en" | "zh" | "ja";
 
 const translations: Record<Language, Record<string, string>> = {
@@ -46,6 +56,9 @@ const translations: Record<Language, Record<string, string>> = {
     end: "End Time",
     current: "Current Time",
     title: "When They Work",
+    enterTime: "Enter ISO Time",
+    errorIsoTime:
+      "Invalid ISO 8601 string. Please use a format like 2023-01-01T12:00:00Z or 2023-01-01T12:00:00+09:00.",
   },
   zh: {
     country: "国家",
@@ -55,6 +68,9 @@ const translations: Record<Language, Record<string, string>> = {
     end: "工作结束时间",
     current: "当前时间",
     title: "他们的工作时间",
+    enterTime: "输入ISO时间",
+    errorIsoTime:
+      "无效的ISO 8601字符串。请使用类似 2023-01-01T12:00:00Z 或 2023-01-01T12:00:00+09:00 的格式。",
   },
   ja: {
     country: "国",
@@ -64,6 +80,9 @@ const translations: Record<Language, Record<string, string>> = {
     end: "勤務終了時間",
     current: "現在の時間",
     title: "彼らの勤務時間",
+    enterTime: "ISO時間を入力",
+    errorIsoTime:
+      "無効なISO 8601文字列です。例えば 2023-01-01T12:00:00Z または 2023-01-01T12:00:00+09:00 のような形式を使用してください。",
   },
 };
 
@@ -77,6 +96,7 @@ export function TimeZoneDataTable() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [favorites, setFavorites] = React.useState<Set<string>>(new Set());
+  const [isoInput, setIsoInput] = React.useState<string>("");
 
   React.useEffect(() => {
     const storedFavorites = localStorage.getItem("favorites");
@@ -90,11 +110,13 @@ export function TimeZoneDataTable() {
   }, [favorites]);
 
   React.useEffect(() => {
-    const timer = setInterval(() => {
-      setReferenceDate(new Date());
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
+    if (!isoInput) {
+      const timer = setInterval(() => {
+        setReferenceDate(new Date());
+      }, 60000);
+      return () => clearInterval(timer);
+    }
+  }, [isoInput]);
 
   const t = translations[language];
 
@@ -202,6 +224,9 @@ export function TimeZoneDataTable() {
   const table = useReactTable({
     data: timeZones,
     columns,
+    initialState: {
+      pagination: { pageSize: 15 }, // Set page size to 100
+    },
     state: {
       sorting,
       columnFilters,
@@ -215,6 +240,31 @@ export function TimeZoneDataTable() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
+  // Dynamically create Zod schema with localized error message based on language
+  const ISOTimeSchema = React.useMemo(() => {
+    return z.object({
+      isoTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
+        message: t.errorIsoTime,
+      }),
+    });
+  }, [t]);
+
+  // Setup React Hook Form with dynamic resolver
+  const form = useForm<z.infer<typeof ISOTimeSchema>>({
+    resolver: zodResolver(ISOTimeSchema),
+    defaultValues: {
+      isoTime: new Date().toISOString(),
+    },
+  });
+
+  function onIsoTimeSubmit(data: z.infer<typeof ISOTimeSchema>) {
+    const { isoTime } = data;
+    setIsoInput(isoTime);
+    const parsedDate = new Date(isoTime);
+    setReferenceDate(parsedDate);
+    form.reset();
+  }
 
   return (
     <div className="container mx-auto p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
@@ -230,6 +280,31 @@ export function TimeZoneDataTable() {
           <option value="ja">日本語</option>
         </select>
       </div>
+
+      {/* ISO Time Form */}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onIsoTimeSubmit)}
+          className="w-2/3 space-y-6 mb-4"
+        >
+          <FormField
+            control={form.control}
+            name="isoTime"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t.enterTime}</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormDescription>{t.enterTime}</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit">Set Time</Button>
+        </form>
+      </Form>
+
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter country..."
