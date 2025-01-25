@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -33,7 +34,6 @@ import {
   TimeZone,
   timeZones,
 } from "./constants";
-
 import {
   Form,
   FormControl,
@@ -59,6 +59,12 @@ const translations: Record<Language, Record<string, string>> = {
     enterTime: "Enter ISO Time",
     errorIsoTime:
       "Invalid ISO 8601 string. Please use a format like 2023-01-01T12:00:00Z or 2023-01-01T12:00:00+09:00.",
+    scheduleProposals: "Meeting Proposals",
+    showScheduler: "Show Schedule Planner",
+    hideScheduler: "Hide Schedule Planner",
+    noZonesSelected: "Select time zones to view schedule proposals",
+    timelineLabel: "Explore dates up to 1 month ahead",
+    daysAhead: "days from now",
   },
   zh: {
     country: "国家",
@@ -71,6 +77,12 @@ const translations: Record<Language, Record<string, string>> = {
     enterTime: "输入ISO时间",
     errorIsoTime:
       "无效的ISO 8601字符串。请使用类似 2023-01-01T12:00:00Z 或 2023-01-01T12:00:00+09:00 的格式。",
+    scheduleProposals: "会议建议时间",
+    showScheduler: "显示日程计划",
+    hideScheduler: "隐藏日程计划",
+    noZonesSelected: "选择时区以查看日程建议",
+    timelineLabel: "探索未来一个月内的日期",
+    daysAhead: "天后",
   },
   ja: {
     country: "国",
@@ -83,6 +95,12 @@ const translations: Record<Language, Record<string, string>> = {
     enterTime: "ISO時間を入力",
     errorIsoTime:
       "無効なISO 8601文字列です。例えば 2023-01-01T12:00:00Z または 2023-01-01T12:00:00+09:00 のような形式を使用してください。",
+    scheduleProposals: "会議の提案時間",
+    showScheduler: "スケジュールプランナーを表示",
+    hideScheduler: "スケジュールプランナーを非表示",
+    noZonesSelected: "スケジュール提案を見るにはタイムゾーンを選択してください",
+    timelineLabel: "最大1か月先までの日付を探索",
+    daysAhead: "日後",
   },
 };
 
@@ -97,6 +115,9 @@ export function TimeZoneDataTable() {
     React.useState<VisibilityState>({});
   const [favorites, setFavorites] = React.useState<Set<string>>(new Set());
   const [isoInput, setIsoInput] = React.useState<string>("");
+  const [selectedTimeZones, setSelectedTimeZones] = useState<TimeZone[]>([]);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [daysAhead, setDaysAhead] = React.useState(0);
 
   React.useEffect(() => {
     const storedFavorites = localStorage.getItem("favorites");
@@ -132,6 +153,14 @@ export function TimeZoneDataTable() {
     });
   };
 
+  const handleRowClick = (zone: TimeZone) => {
+    setSelectedTimeZones((prev) =>
+      prev.some((z) => z.country === zone.country)
+        ? prev.filter((z) => z.country !== zone.country)
+        : [...prev, zone]
+    );
+  };
+
   const columns = React.useMemo<ColumnDef<TimeZone>[]>(
     () => [
       {
@@ -141,7 +170,12 @@ export function TimeZoneDataTable() {
           const zone = row.original;
           const isFav = favorites.has(zone.country);
           return (
-            <button onClick={() => toggleFavorite(zone.country)}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(zone.country);
+              }}
+            >
               {isFav ? (
                 <Star className="text-yellow-500" />
               ) : (
@@ -225,7 +259,7 @@ export function TimeZoneDataTable() {
     data: timeZones,
     columns,
     initialState: {
-      pagination: { pageSize: 15 }, // Set page size to 100
+      pagination: { pageSize: 15 },
     },
     state: {
       sorting,
@@ -241,7 +275,6 @@ export function TimeZoneDataTable() {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  // Dynamically create Zod schema with localized error message based on language
   const ISOTimeSchema = React.useMemo(() => {
     return z.object({
       isoTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
@@ -250,7 +283,6 @@ export function TimeZoneDataTable() {
     });
   }, [t]);
 
-  // Setup React Hook Form with dynamic resolver
   const form = useForm<z.infer<typeof ISOTimeSchema>>({
     resolver: zodResolver(ISOTimeSchema),
     defaultValues: {
@@ -281,7 +313,6 @@ export function TimeZoneDataTable() {
         </select>
       </div>
 
-      {/* ISO Time Form */}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onIsoTimeSubmit)}
@@ -315,6 +346,7 @@ export function TimeZoneDataTable() {
           className="max-w-sm"
         />
       </div>
+
       <div className="rounded-md border overflow-auto">
         <Table>
           <TableHeader>
@@ -333,18 +365,29 @@ export function TimeZoneDataTable() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-4 py-2">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const isSelected = selectedTimeZones.some(
+                  (z) => z.country === row.original.country
+                );
+                return (
+                  <TableRow
+                    key={row.id}
+                    onClick={() => handleRowClick(row.original)}
+                    className={`cursor-pointer ${
+                      isSelected ? "bg-blue-50 dark:bg-gray-700" : ""
+                    }`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="px-4 py-2">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell
@@ -358,6 +401,7 @@ export function TimeZoneDataTable() {
           </TableBody>
         </Table>
       </div>
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
           variant="outline"
@@ -375,6 +419,60 @@ export function TimeZoneDataTable() {
         >
           Next
         </Button>
+      </div>
+
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">{t.scheduleProposals}</h2>
+          {selectedTimeZones.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={() => setShowScheduler(!showScheduler)}
+            >
+              {showScheduler ? t.hideScheduler : t.showScheduler}
+            </Button>
+          )}
+        </div>
+
+        {selectedTimeZones.length === 0 ? (
+          <div className="text-center py-4 text-gray-500">
+            {t.noZonesSelected}
+          </div>
+        ) : (
+          showScheduler && (
+            <div className="space-y-4">
+              <div className="mb-4 space-y-2">
+                <label className="block text-sm font-medium">
+                  {t.timelineLabel} ({daysAhead} {t.daysAhead})
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="30"
+                  value={daysAhead}
+                  onChange={(e) => setDaysAhead(Number(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>
+                    {new Date(referenceDate).toLocaleDateString(language, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  <span>
+                    {new Date(
+                      referenceDate.getTime() + 30 * 86400000
+                    ).toLocaleDateString(language, {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )
+        )}
       </div>
     </div>
   );
