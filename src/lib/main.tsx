@@ -44,6 +44,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { ScheduleProposal } from "./components/ScheduleProposal";
 
 type Language = "en" | "zh" | "ja";
 
@@ -115,9 +116,9 @@ export function TimeZoneDataTable() {
     React.useState<VisibilityState>({});
   const [favorites, setFavorites] = React.useState<Set<string>>(new Set());
   const [isoInput, setIsoInput] = React.useState<string>("");
-  const [selectedTimeZones, setSelectedTimeZones] = useState<TimeZone[]>([]);
   const [showScheduler, setShowScheduler] = useState(false);
   const [daysAhead, setDaysAhead] = React.useState(0);
+  const [rowSelection, setRowSelection] = React.useState({});
 
   React.useEffect(() => {
     const storedFavorites = localStorage.getItem("favorites");
@@ -141,39 +142,67 @@ export function TimeZoneDataTable() {
 
   const t = translations[language];
 
-  const toggleFavorite = (country: string) => {
+  const toggleFavorite = (id: string) => {
     setFavorites((prev) => {
       const updated = new Set(prev);
-      if (updated.has(country)) {
-        updated.delete(country);
+      if (updated.has(id)) {
+        updated.delete(id);
       } else {
-        updated.add(country);
+        updated.add(id);
       }
       return updated;
     });
   };
-
-  const handleRowClick = (zone: TimeZone) => {
-    setSelectedTimeZones((prev) =>
-      prev.some((z) => z.country === zone.country)
-        ? prev.filter((z) => z.country !== zone.country)
-        : [...prev, zone]
-    );
-  };
-
+  const Checkbox = ({
+    checked,
+    indeterminate,
+    onChange,
+  }: {
+    checked: boolean;
+    indeterminate: boolean;
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => (
+    <input
+      type="checkbox"
+      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+      checked={checked}
+      ref={(el) => el && (el.indeterminate = indeterminate)}
+      onChange={onChange}
+      aria-label="Select row"
+    />
+  );
   const columns = React.useMemo<ColumnDef<TimeZone>[]>(
     () => [
+      // Selection column
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={table.getIsAllRowsSelected()}
+            indeterminate={table.getIsSomeRowsSelected()}
+            onChange={(e) => table.getToggleAllRowsSelectedHandler()(e)}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            indeterminate={row.getIsSomeSelected()}
+            onChange={row.getToggleSelectedHandler()}
+          />
+        ),
+        size: 40,
+      },
       {
         id: "favorite",
         header: "",
         cell: ({ row }) => {
           const zone = row.original;
-          const isFav = favorites.has(zone.country);
+          const isFav = favorites.has(zone.id);
           return (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                toggleFavorite(zone.country);
+                toggleFavorite(zone.id);
               }}
             >
               {isFav ? (
@@ -228,7 +257,17 @@ export function TimeZoneDataTable() {
         header: t.current,
         cell: ({ row }) => {
           const zone = row.original;
-          return computeZoneTime(zone.utc, referenceDate);
+          const date = computeZoneTime(zone.utc, referenceDate);
+
+          // Return fallback if invalid date
+          if (isNaN(date.getTime())) return "Invalid time";
+
+          // Format based on language
+          return date.toLocaleTimeString(language, {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: language === "en", // Use AM/PM only for English
+          });
         },
         enableSorting: true,
         enableFiltering: true,
@@ -238,8 +277,7 @@ export function TimeZoneDataTable() {
         header: "Status",
         cell: ({ row }) => {
           const zone = row.original;
-          const current = computeZoneTime(zone.utc, referenceDate);
-          const status = getStatus(zone, current, referenceDate);
+          const status = getStatus(zone, referenceDate);
           return (
             <span
               className={`px-2 py-1 rounded-full text-sm ${status.colorClass}`}
@@ -258,14 +296,20 @@ export function TimeZoneDataTable() {
   const table = useReactTable({
     data: timeZones,
     columns,
+    getRowId: (row) => row.id, // Use nanoid-generated ID
+
     initialState: {
       pagination: { pageSize: 15 },
     },
     state: {
+      rowSelection,
+
       sorting,
       columnFilters,
       columnVisibility,
     },
+    onRowSelectionChange: setRowSelection,
+
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -273,8 +317,12 @@ export function TimeZoneDataTable() {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    enableRowSelection: true,
+    enableMultiRowSelection: true,
   });
-
+  const selectedTimeZones = table
+    .getSelectedRowModel()
+    .rows.map((row) => row.original);
   const ISOTimeSchema = React.useMemo(() => {
     return z.object({
       isoTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
@@ -295,7 +343,6 @@ export function TimeZoneDataTable() {
     setIsoInput(isoTime);
     const parsedDate = new Date(isoTime);
     setReferenceDate(parsedDate);
-    form.reset();
   }
 
   return (
@@ -366,16 +413,13 @@ export function TimeZoneDataTable() {
           <TableBody>
             {table.getRowModel().rows.length ? (
               table.getRowModel().rows.map((row) => {
-                const isSelected = selectedTimeZones.some(
-                  (z) => z.country === row.original.country
-                );
                 return (
                   <TableRow
                     key={row.id}
-                    onClick={() => handleRowClick(row.original)}
-                    className={`cursor-pointer ${
-                      isSelected ? "bg-blue-50 dark:bg-gray-700" : ""
-                    }`}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={
+                      row.getIsSelected() ? "bg-blue-50 dark:bg-gray-700" : ""
+                    }
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="px-4 py-2">
@@ -442,17 +486,6 @@ export function TimeZoneDataTable() {
           showScheduler && (
             <div className="space-y-4">
               <div className="mb-4 space-y-2">
-                <label className="block text-sm font-medium">
-                  {t.timelineLabel} ({daysAhead} {t.daysAhead})
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="30"
-                  value={daysAhead}
-                  onChange={(e) => setDaysAhead(Number(e.target.value))}
-                  className="w-full"
-                />
                 <div className="flex justify-between text-sm text-gray-500">
                   <span>
                     {new Date(referenceDate).toLocaleDateString(language, {
@@ -469,6 +502,22 @@ export function TimeZoneDataTable() {
                     })}
                   </span>
                 </div>
+              </div>
+              {/* Schedule Proposal Section */}
+              <div className="mt-8">
+                {selectedTimeZones.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">
+                    {t.noZonesSelected}
+                  </div>
+                ) : (
+                  showScheduler && (
+                    <ScheduleProposal
+                      timeZones={selectedTimeZones}
+                      referenceDate={referenceDate}
+                      language={language}
+                    />
+                  )
+                )}
               </div>
             </div>
           )

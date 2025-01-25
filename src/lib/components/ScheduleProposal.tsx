@@ -1,176 +1,170 @@
 import { TimeZone } from "@/lib/types";
-import {
-  computeZoneTime,
-  countryNames,
-  parseTimeToMinutes,
-  timeZones,
-} from "@/lib/constants";
+import { computeZoneTime, countryNames } from "@/lib/constants";
+import { useState } from "react";
 
 interface ScheduleProposalProps {
-  candidateDates: Date[];
   timeZones: TimeZone[];
   referenceDate: Date;
   language: "en" | "zh" | "ja";
 }
 
-const TimelineSlot = ({
-  time,
-  zones,
+const TimeCell = ({
   date,
+  zone,
+  referenceDate,
+  language,
 }: {
-  time: string;
-  zones: string[];
   date: Date;
+  zone: TimeZone;
+  referenceDate: Date;
+  language: "en" | "zh" | "ja";
 }) => {
-  const baseDate = new Date(date);
-  const [hour] = time.split(":").map(Number);
-  baseDate.setHours(hour);
+  const localTime = computeZoneTime(zone.utc, referenceDate);
+  const isActive = date.getDate() === localTime.getDate();
+  const isPast = date < new Date();
 
   return (
-    <div className="relative h-12 border-b">
-      <div className="absolute left-0 -ml-14 w-12 text-right text-sm">
-        {time}
+    <div
+      className={`p-2 text-center border ${
+        isPast ? "bg-gray-100 dark:bg-gray-700" : ""
+      }`}
+    >
+      <div className={`text-sm ${isActive ? "font-bold text-blue-600" : ""}`}>
+        {date.toLocaleDateString(language, {
+          day: "numeric",
+          month: "short",
+        })}
       </div>
-      {zones.map((zone, i) => (
-        <div
-          key={i}
-          className="absolute h-full bg-green-100 opacity-75"
-          style={{
-            left: `${(i * 100) / zones.length}%`,
-            width: `${100 / zones.length}%`,
-          }}
-        >
-          <span className="text-xs pl-1">
-            {computeZoneTime(timeZones[i].utc, baseDate)}
-          </span>
-        </div>
-      ))}
+      <div className="text-xs text-gray-500">
+        {localTime.toLocaleTimeString(language, {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </div>
     </div>
   );
 };
 
 export function ScheduleProposal({
-  candidateDates,
   timeZones,
   referenceDate,
   language,
 }: ScheduleProposalProps) {
-  const getLocaleOptions = () => ({
-    weekday: "short" as const,
-    month: "short" as const,
-    day: "numeric" as const,
-  });
+  const [hoveredTime, setHoveredTime] = useState<string | null>(null);
+
+  const timeSlots = Array.from({ length: 24 }).map(
+    (_, i) => `${i.toString().padStart(2, "0")}:02`
+  );
+
+  const groupedZones = timeZones.reduce((acc, zone) => {
+    const region = zone.country.split(" ")[0];
+    if (!acc[region]) acc[region] = [];
+    acc[region].push(zone);
+    return acc;
+  }, {} as Record<string, TimeZone[]>);
 
   return (
-    <div className="space-y-8">
-      {candidateDates.map((date, dateIndex) => {
-        const currentDate = new Date(date);
-        return (
-          <div
-            key={dateIndex}
-            className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"
-          >
-            <h3 className="text-lg font-semibold mb-4">
-              {new Intl.DateTimeFormat(language, getLocaleOptions()).format(
-                currentDate
-              )}
-            </h3>
-
-            <div className="flex">
-              <div className="w-24 pr-4 space-y-4">
-                {timeZones.map((zone) => (
-                  <div key={zone.country} className="h-12 flex items-center">
-                    <span className="text-sm">
-                      {countryNames[zone.country]?.[language] || zone.country}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex-1 relative">
-                {[...Array(24)].map((_, hour) => {
-                  const slotDate = new Date(currentDate);
-                  slotDate.setHours(hour);
-                  return (
-                    <TimelineSlot
-                      key={hour}
-                      time={`${hour.toString().padStart(2, "0")}:00`}
-                      zones={timeZones.map((zone) =>
-                        computeZoneTime(zone.utc, slotDate)
-                      )}
-                      date={currentDate}
-                    />
-                  );
-                })}
-
-                <div
-                  className="absolute left-0 right-0 h-px bg-red-500"
-                  style={{
-                    top: `${
-                      ((referenceDate.getHours() * 60 +
-                        referenceDate.getMinutes()) /
-                        1440) *
-                      100
-                    }%`,
-                  }}
-                >
-                  <div className="absolute -top-2 -ml-2 text-xs text-red-500">
-                    {new Intl.DateTimeFormat(language, {
-                      hour: "numeric",
-                      minute: "numeric",
-                    }).format(referenceDate)}
-                  </div>
-                </div>
-
-                {timeZones.map((zone, zoneIndex) => {
-                  const start = parseTimeToMinutes(zone.startTime);
-                  const end = parseTimeToMinutes(zone.endTime);
-                  const isSameDay =
-                    currentDate.toDateString() === new Date().toDateString();
-
-                  return (
-                    <div
-                      key={zoneIndex}
-                      className="absolute bg-green-200 opacity-50 rounded"
-                      style={{
-                        left: `${(zoneIndex * 100) / timeZones.length}%`,
-                        width: `${100 / timeZones.length}%`,
-                        top: `${(start / 1440) * 100}%`,
-                        height: `${((end - start) / 1440) * 100}%`,
-                        border: isSameDay ? "1px solid #4CAF50" : "none",
-                      }}
-                    />
-                  );
-                })}
-              </div>
+    <div className="overflow-x-auto pb-4">
+      <div className="inline-block min-w-full">
+        <div className="flex border-b">
+          <div className="w-32" />
+          {timeSlots.map((time) => (
+            <div
+              key={time}
+              className="flex-1 text-center p-2 border-l"
+              onMouseEnter={() => setHoveredTime(time)}
+              onMouseLeave={() => setHoveredTime(null)}
+            >
+              {time}
             </div>
+          ))}
+        </div>
 
-            <div className="mt-4 grid grid-cols-3 gap-4">
-              <button className="btn-primary">
-                {language === "en"
-                  ? "Suggest"
-                  : language === "zh"
-                  ? "建议"
-                  : "提案"}
-              </button>
-              <button className="btn-outline">
-                {language === "en"
-                  ? "Compare"
-                  : language === "zh"
-                  ? "比较"
-                  : "比較"}
-              </button>
-              <button className="btn-outline">
-                {language === "en"
-                  ? "Add to Calendar"
-                  : language === "zh"
-                  ? "添加到日历"
-                  : "カレンダーに追加"}
-              </button>
+        {Object.entries(groupedZones).map(([region, zones]) => (
+          <div key={region} className="border-b">
+            <div className="flex">
+              <div className="w-32 p-2 bg-gray-50 dark:bg-gray-800 border-r">
+                <h4 className="font-medium">
+                  {countryNames[region]?.[language] || region}
+                </h4>
+                <div className="text-xs text-gray-500">UTC{zones[0].utc}</div>
+              </div>
+
+              {timeSlots.map((time) => (
+                <div
+                  key={time}
+                  className={`flex-1 grid grid-cols-${zones.length} ${
+                    hoveredTime === time ? "bg-blue-50 dark:bg-gray-700" : ""
+                  }`}
+                >
+                  {zones.map((zone) => {
+                    const slotDate = new Date(referenceDate);
+                    const [hours] = time.split(":").map(Number);
+                    slotDate.setHours(hours);
+
+                    return (
+                      <TimeCell
+                        key={zone.country}
+                        date={slotDate}
+                        zone={zone}
+                        referenceDate={referenceDate}
+                        language={language}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
-        );
-      })}
+        ))}
+
+        <div className="flex border-b">
+          <div className="w-32 p-2 bg-gray-50 dark:bg-gray-800 border-r">
+            <h4 className="font-medium">UTC</h4>
+          </div>
+          {timeSlots.map((time) => {
+            const utcDate = new Date(referenceDate);
+            const [hours] = time.split(":").map(Number);
+            utcDate.setHours(hours);
+
+            return (
+              <div key={time} className="flex-1 text-center p-2 border-l">
+                <div className="text-sm">
+                  {utcDate.toLocaleDateString(language, {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {utcDate.toLocaleTimeString(language, {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4 flex gap-4 text-sm">
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-4 bg-blue-100" />
+          {language === "en"
+            ? "Current time"
+            : language === "zh"
+            ? "当前时间"
+            : "現在時刻"}
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-4 bg-gray-100" />
+          {language === "en"
+            ? "Past dates"
+            : language === "zh"
+            ? "过去日期"
+            : "過去の日付"}
+        </div>
+      </div>
     </div>
   );
 }

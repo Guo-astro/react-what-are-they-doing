@@ -4,59 +4,15 @@ import iso_zh from "i18n-iso-countries/langs/zh.json";
 import iso_ja from "i18n-iso-countries/langs/ja.json";
 import { getAllCountries, getTimezone } from "countries-and-timezones";
 import { getCountryCallingCode } from "libphonenumber-js";
+import Holidays from "date-holidays";
+import { nanoid } from "nanoid";
 
-i18n.registerLocale(iso_en);
-i18n.registerLocale(iso_zh);
-i18n.registerLocale(iso_ja);
-
-const getUtcOffsetString = (offsetMinutes: number): string => {
-  const sign = offsetMinutes >= 0 ? "+" : "-";
-  const absMinutes = Math.abs(offsetMinutes);
-  return `UTC${sign}${Math.floor(absMinutes / 60)
-    .toString()
-    .padStart(2, "0")}:${(absMinutes % 60).toString().padStart(2, "0")}`;
-};
-
-const countries = getAllCountries();
-const countryNames: Record<string, { en: string; zh: string; ja: string }> = {};
-const timeZones: TimeZone[] = [];
-
-Object.values(countries).forEach((country) => {
-  const isoCode = country.id;
-  const en = i18n.getName(isoCode, "en") || country.name;
-  const zh = i18n.getName(isoCode, "zh") || en;
-  const ja = i18n.getName(isoCode, "ja") || en;
-
-  // Get calling code
-  let callingCode = "";
-  try {
-    callingCode = `+${getCountryCallingCode(isoCode)}`;
-  } catch {
-    callingCode = "";
-  }
-
-  countryNames[isoCode] = { en, zh, ja };
-
-  country.timezones.forEach((tzName: string) => {
-    const tz = getTimezone(tzName);
-    if (!tz) return;
-
-    timeZones.push({
-      country: isoCode,
-      countryName: zh,
-      utc: getUtcOffsetString(tz.utcOffset),
-      code: callingCode,
-      startTime: "09:00",
-      endTime: "17:00",
-    });
-  });
-});
-
-export { countryNames, timeZones };
-
+// TypeScript interfaces
 export interface TimeZone {
-  country: string; // ISO country code
-  countryName: string; // Localized name
+  id: string;
+
+  country: string;
+  countryName: string;
   utc: string;
   code: string;
   startTime: string;
@@ -65,105 +21,161 @@ export interface TimeZone {
   holidayName?: string;
 }
 
+// Initialize i18n
+i18n.registerLocale(iso_en);
+i18n.registerLocale(iso_zh);
+i18n.registerLocale(iso_ja);
+
 // Utility functions
-export function parseUTCOffset(
-  utc: string
-): { sign: number; hours: number; minutes: number } | null {
+const getUtcOffsetString = (offsetMinutes: number): string => {
+  const sign = offsetMinutes >= 0 ? "+" : "-";
+  const absMinutes = Math.abs(offsetMinutes);
+  return `UTC${sign}${String(Math.floor(absMinutes / 60)).padStart(
+    2,
+    "0"
+  )}:${String(absMinutes % 60).padStart(2, "0")}`;
+};
+
+// Country and timezone data initialization
+const countries = getAllCountries();
+export const countryNames: Record<
+  string,
+  { en: string; zh: string; ja: string }
+> = {};
+export const timeZones: TimeZone[] = [];
+
+Object.values(countries).forEach((country) => {
+  const isoCode = country.id;
+  const names = {
+    en: i18n.getName(isoCode, "en") || country.name,
+    zh: i18n.getName(isoCode, "zh") || country.name,
+    ja: i18n.getName(isoCode, "ja") || country.name,
+  };
+
+  countryNames[isoCode] = names;
+
+  // Get calling code safely
+  let callingCode = "";
+  try {
+    callingCode = `+${getCountryCallingCode(isoCode)}`;
+  } catch (error) {
+    console.warn(`Failed to get calling code for ${isoCode}:`, error);
+  }
+
+  // Process timezones
+  country.timezones.forEach((tzName: string) => {
+    const tz = getTimezone(tzName);
+    if (!tz) return;
+
+    timeZones.push({
+      id: `${country.id}-${nanoid()}`, // Unique combination
+      country: isoCode,
+      countryName: names.zh,
+      utc: getUtcOffsetString(tz.utcOffset),
+      code: callingCode,
+      startTime: "09:00",
+      endTime: "17:00",
+    });
+  });
+});
+
+// Date calculation functions
+export function parseUTCOffset(utc: string) {
   const match = utc.match(/UTC([+-])(\d{2}):(\d{2})/);
   if (!match) return null;
-  const sign = match[1] === "+" ? 1 : -1;
-  const hours = parseInt(match[2], 10);
-  const minutes = parseInt(match[3], 10);
-  return { sign, hours, minutes };
+
+  return {
+    sign: match[1] === "+" ? 1 : -1,
+    hours: parseInt(match[2], 10),
+    minutes: parseInt(match[3], 10),
+  };
 }
 
-export function computeZoneTime(utc: string, referenceDate: Date): string {
+export function computeZoneTime(utc: string, referenceDate: Date): Date {
   const offset = parseUTCOffset(utc);
-  if (!offset) return "Invalid UTC";
-  const utcTime = new Date(
-    referenceDate.getTime() + referenceDate.getTimezoneOffset() * 60000
-  );
-  utcTime.setHours(utcTime.getHours() + offset.sign * offset.hours);
-  utcTime.setMinutes(utcTime.getMinutes() + offset.sign * offset.minutes);
-  const hours = utcTime.getHours().toString().padStart(2, "0");
-  const minutes = utcTime.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
+  if (!offset) return new Date(NaN);
+
+  const totalMinutes = (offset.hours * 60 + offset.minutes) * offset.sign;
+  const adjustedTime = new Date(referenceDate.getTime() + totalMinutes * 60000);
+  return adjustedTime;
 }
 
 export function parseTimeToMinutes(timeStr: string): number {
   const [hours, minutes] = timeStr.split(":").map(Number);
-  return hours * 60 + minutes;
+  return hours * 60 + (minutes || 0);
 }
 
-import Holidays from "date-holidays";
+// Status calculation with proper type safety
+interface StatusResult {
+  label: string;
+  colorClass: string;
+}
 
-export function getStatus(
-  zone: TimeZone,
-  currentTime: string,
-  referenceDate: Date
-): { label: string; colorClass: string } {
-  // Convert to local time in the timezone
-  const localDate = new Date(
-    referenceDate.toLocaleString("en-US", {
-      timeZone: zone.utc.replace("UTC", ""),
-    })
-  );
+export function getStatus(zone: TimeZone, referenceDate: Date): StatusResult {
+  try {
+    const localDate = computeZoneTime(zone.utc, referenceDate);
+    if (isNaN(localDate.getTime())) return invalidDateResult();
 
-  // Check weekend first
-  const isWeekend = localDate.getDay() === 0 || localDate.getDay() === 6; // 0 = Sunday, 6 = Saturday
+    const currentMinutes = localDate.getHours() * 60 + localDate.getMinutes();
+    const startMinutes = parseTimeToMinutes(zone.startTime);
+    const endMinutes = parseTimeToMinutes(zone.endTime);
 
-  // Check holidays
-  const hd = new Holidays(zone.country);
-  const holiday = hd.isHoliday(localDate);
+    // Check weekend
+    const isWeekend = localDate.getDay() % 6 === 0;
 
-  // Existing time calculation
-  const currentMinutes = parseTimeToMinutes(currentTime);
-  const startMinutes = parseTimeToMinutes(zone.startTime);
-  const endMinutes = parseTimeToMinutes(zone.endTime);
+    // Check holidays
+    const hd = new Holidays(zone.country);
+    const holidays = hd.getHolidays(localDate.getFullYear());
+    const isHoliday = holidays.some(
+      (h) => h.date === localDate.toISOString().split("T")[0]
+    );
 
-  // Determine working status
-  let isWorking = false;
-  if (startMinutes < endMinutes) {
-    isWorking = currentMinutes >= startMinutes && currentMinutes < endMinutes;
-  } else {
-    isWorking = currentMinutes >= startMinutes || currentMinutes < endMinutes;
+    // Determine status
+    if (isHoliday) return holidayResult();
+    if (isWeekend) return weekendResult(localDate);
+
+    return calculateWorkStatus(currentMinutes, startMinutes, endMinutes);
+  } catch (error) {
+    console.error("Error calculating status:", error);
+    return { label: "Error", colorClass: "bg-gray-500 text-white" };
   }
+}
 
-  // Status priority: Holiday > Weekend > Working status
-  if (holiday) {
-    return {
-      label: holiday[0].name || "Holiday",
-      colorClass: "bg-purple-500 text-white",
-    };
-  }
+// Helper functions for status calculation
+function invalidDateResult(): StatusResult {
+  return { label: "Invalid Time", colorClass: "bg-gray-500 text-white" };
+}
 
-  if (isWeekend) {
-    return {
-      label: localDate.getDay() === 0 ? "Sunday" : "Saturday",
-      colorClass: "bg-red-500 text-white",
-    };
-  }
+function holidayResult(): StatusResult {
+  return { label: "Holiday", colorClass: "bg-purple-500 text-white" };
+}
 
-  // Existing working status logic
-  const aboutToStart =
-    (startMinutes - currentMinutes >= 0 &&
-      startMinutes - currentMinutes <= 30) ||
-    (startMinutes < endMinutes &&
-      currentMinutes < startMinutes &&
-      startMinutes - currentMinutes <= 30);
-  const aboutToFinish =
-    (currentMinutes - endMinutes >= 0 && currentMinutes - endMinutes <= 30) ||
-    (startMinutes > endMinutes &&
-      currentMinutes < endMinutes &&
-      endMinutes - currentMinutes <= 30);
+function weekendResult(date: Date): StatusResult {
+  return {
+    label: date.getDay() === 0 ? "Sunday" : "Saturday",
+    colorClass: "bg-red-500 text-white",
+  };
+}
+
+function calculateWorkStatus(
+  current: number,
+  start: number,
+  end: number
+): StatusResult {
+  const isWorking =
+    start < end
+      ? current >= start && current < end
+      : current >= start || current < end;
 
   if (isWorking) {
-    return aboutToFinish
+    const timeLeft = end - current;
+    return timeLeft <= 30
       ? { label: "About to finish", colorClass: "bg-yellow-500 text-white" }
       : { label: "Working", colorClass: "bg-green-500 text-white" };
   }
 
-  return aboutToStart
+  const timeUntil = start - current;
+  return timeUntil <= 30 && timeUntil > 0
     ? { label: "About to start", colorClass: "bg-blue-500 text-white" }
     : { label: "Closed", colorClass: "bg-gray-500 text-white" };
 }
