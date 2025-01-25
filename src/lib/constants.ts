@@ -55,13 +55,14 @@ Object.values(countries).forEach((country) => {
 export { countryNames, timeZones };
 
 export interface TimeZone {
-  countryName: string; // Localized country name
-
-  country: string;
+  country: string; // ISO country code
+  countryName: string; // Localized name
   utc: string;
   code: string;
   startTime: string;
   endTime: string;
+  isHoliday?: boolean;
+  holidayName?: string;
 }
 
 // Utility functions
@@ -94,19 +95,56 @@ export function parseTimeToMinutes(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
+import Holidays from "date-holidays";
+
 export function getStatus(
   zone: TimeZone,
-  current: string
+  currentTime: string,
+  referenceDate: Date
 ): { label: string; colorClass: string } {
-  const currentMinutes = parseTimeToMinutes(current);
+  // Convert to local time in the timezone
+  const localDate = new Date(
+    referenceDate.toLocaleString("en-US", {
+      timeZone: zone.utc.replace("UTC", ""),
+    })
+  );
+
+  // Check weekend first
+  const isWeekend = localDate.getDay() === 0 || localDate.getDay() === 6; // 0 = Sunday, 6 = Saturday
+
+  // Check holidays
+  const hd = new Holidays(zone.country);
+  const holiday = hd.isHoliday(localDate);
+
+  // Existing time calculation
+  const currentMinutes = parseTimeToMinutes(currentTime);
   const startMinutes = parseTimeToMinutes(zone.startTime);
   const endMinutes = parseTimeToMinutes(zone.endTime);
+
+  // Determine working status
   let isWorking = false;
   if (startMinutes < endMinutes) {
     isWorking = currentMinutes >= startMinutes && currentMinutes < endMinutes;
   } else {
     isWorking = currentMinutes >= startMinutes || currentMinutes < endMinutes;
   }
+
+  // Status priority: Holiday > Weekend > Working status
+  if (holiday) {
+    return {
+      label: holiday[0].name || "Holiday",
+      colorClass: "bg-purple-500 text-white",
+    };
+  }
+
+  if (isWeekend) {
+    return {
+      label: localDate.getDay() === 0 ? "Sunday" : "Saturday",
+      colorClass: "bg-red-500 text-white",
+    };
+  }
+
+  // Existing working status logic
   const aboutToStart =
     (startMinutes - currentMinutes >= 0 &&
       startMinutes - currentMinutes <= 30) ||
@@ -120,17 +158,12 @@ export function getStatus(
       endMinutes - currentMinutes <= 30);
 
   if (isWorking) {
-    if (aboutToFinish) {
-      return {
-        label: "About to finish",
-        colorClass: "bg-yellow-500 text-white",
-      };
-    }
-    return { label: "Working", colorClass: "bg-green-500 text-white" };
-  } else {
-    if (aboutToStart) {
-      return { label: "About to start", colorClass: "bg-blue-500 text-white" };
-    }
-    return { label: "Sleeping", colorClass: "bg-gray-500 text-white" };
+    return aboutToFinish
+      ? { label: "About to finish", colorClass: "bg-yellow-500 text-white" }
+      : { label: "Working", colorClass: "bg-green-500 text-white" };
   }
+
+  return aboutToStart
+    ? { label: "About to start", colorClass: "bg-blue-500 text-white" }
+    : { label: "Closed", colorClass: "bg-gray-500 text-white" };
 }

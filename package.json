@@ -1,7 +1,7 @@
 {
   "name": "react-timezone-table",
   "private": false,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "types": "dist/index.d.ts",
   "license": "MIT",
@@ -88,6 +88,7 @@
     "countries-and-timezones": "^3.7.2",
     "country-data": "^0.0.31",
     "date-fns": "^4.1.0",
+    "date-holidays": "^3.23.18",
     "framer-motion": "^11.11.17",
     "i18n-iso-countries": "^7.13.0",
     "libphonenumber-js": "^1.11.18",

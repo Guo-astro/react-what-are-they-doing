@@ -205,7 +205,7 @@ export function TimeZoneDataTable() {
         cell: ({ row }) => {
           const zone = row.original;
           const current = computeZoneTime(zone.utc, referenceDate);
-          const status = getStatus(zone, current);
+          const status = getStatus(zone, current, referenceDate);
           return (
             <span
               className={`px-2 py-1 rounded-full text-sm ${status.colorClass}`}
