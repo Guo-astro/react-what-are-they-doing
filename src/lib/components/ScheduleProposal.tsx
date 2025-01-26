@@ -1,3 +1,4 @@
+// src/lib/components/ScheduleProposal.tsx
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import {
   DndContext,
@@ -28,8 +29,31 @@ const ScheduleProposal: React.FC<ScheduleProposalProps> = ({
     (state: RootState) => state.timeZone.selectedMeetingTime
   );
   const timelineRef = useRef<HTMLDivElement>(null);
-
   const sensors = useSensors(useSensor(PointerSensor));
+
+  // Translation dictionary
+  const translations = {
+    timelineLabel: {
+      en: "Timeline",
+      zh: "时间线",
+      ja: "タイムライン",
+    },
+    selectedTime: {
+      en: "Selected Time",
+      zh: "选定时间",
+      ja: "選択した時間",
+    },
+    timezoneLabel: {
+      en: "Timezone",
+      zh: "时区",
+      ja: "タイムゾーン",
+    },
+    localTime: {
+      en: "Local Time",
+      zh: "当地時間",
+      ja: "現地時間",
+    },
+  };
 
   const calculateMarkerPosition = useCallback(() => {
     if (timelineRef.current) {
@@ -79,19 +103,16 @@ const ScheduleProposal: React.FC<ScheduleProposalProps> = ({
       <div
         ref={setNodeRef}
         style={{ transform: `translateX(${clampedX}px)` }}
-        className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 cursor-pointer"
+        className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 cursor-pointer group"
         aria-valuemin={0}
         aria-valuemax={24}
         aria-valuenow={parseInt(selectedMeetingTime.split(":")[0])}
-        aria-label="Selected Meeting Time"
+        aria-label={translations.selectedTime[language]}
         {...listeners}
         {...attributes}
       >
         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-          <div
-            className="w-0 h-0 border-l-4 border-r-4 border-t-6 border-l-transparent border-r-transparent border-t-red-500"
-            style={{ transform: "rotate(180deg)" }}
-          ></div>
+          <div className="w-0 h-0 border-l-6 border-r-6 border-t-8 border-l-transparent border-r-transparent border-t-red-500 transition-transform duration-150 group-hover:scale-125" />
         </div>
       </div>
     );
@@ -101,30 +122,35 @@ const ScheduleProposal: React.FC<ScheduleProposalProps> = ({
 
   return (
     <div className="relative overflow-x-auto pb-4">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {language === "en"
-            ? `Timeline (${userTimeZone})`
-            : language === "zh"
-            ? `时间线 (${userTimeZone})`
-            : `タイムライン (${userTimeZone})`}
-        </span>
+      {/* Timeline Header */}
+      <div className="flex items-center justify-between mb-4 px-2">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          {`${translations.timelineLabel[language]} (${userTimeZone})`}
+        </h3>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+          {selectedMeetingTime}
+        </div>
       </div>
+
+      {/* Timeline Container */}
       <div className="w-full" ref={timelineRef}>
-        <div className="flex items-center border-b bg-gray-50 dark:bg-gray-800 relative">
-          <div className="w-32 flex-shrink-0"></div>
+        {/* Timeline Hours */}
+        <div className="flex items-center border-b bg-gray-50 dark:bg-gray-800 relative h-12">
+          <div className="w-32 flex-shrink-0 pl-4 text-sm font-medium text-gray-700 dark:text-gray-300">
+            {translations.timezoneLabel[language]}
+          </div>
           {Array.from({ length: 24 }).map((_, i) => (
             <div
               key={i}
-              className="flex-1 text-center p-2 border-l text-xs text-gray-500 truncate"
+              className="flex-1 text-center p-2 border-l text-xs text-gray-500 dark:text-gray-400 truncate flex items-center justify-center"
             >
               {`${i.toString().padStart(2, "0")}:00`}
             </div>
           ))}
         </div>
 
-        <div className="flex">
-          <div className="w-32 flex-shrink-0"></div>
+        {/* Timezone Rows */}
+        <div className="space-y-4 mt-4">
           {timeZones.map((zone) => {
             const [hours, minutes] = selectedMeetingTime.split(":").map(Number);
             const localDate = computeZoneTime(zone.utc, referenceDate);
@@ -140,13 +166,20 @@ const ScheduleProposal: React.FC<ScheduleProposalProps> = ({
             return (
               <div
                 key={zone.id}
-                className="flex-1 border-l dark:border-gray-700 relative"
+                className="flex items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors rounded-lg"
               >
-                <div className="absolute top-0 left-0 w-full text-center p-2 bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="w-32 flex-shrink-0 pl-4 text-sm font-medium text-gray-700 dark:text-gray-300">
                   {countryNames[zone.country]?.[language] || zone.country}
                 </div>
-                <div className="mt-8 text-center text-sm text-gray-800 dark:text-gray-200">
-                  {formattedTime} ({zone.countryName})
+                <div className="flex-1 relative h-12 border-l dark:border-gray-700">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-sm text-gray-800 dark:text-gray-200">
+                      <span className="font-medium">{formattedTime}</span>
+                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                        ({translations.localTime[language]})
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             );
@@ -154,19 +187,17 @@ const ScheduleProposal: React.FC<ScheduleProposalProps> = ({
         </div>
       </div>
 
+      {/* Draggable Marker */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <DraggableMarker />
       </DndContext>
 
-      <div className="mt-4 flex gap-4 text-sm">
-        <div className="flex items-center gap-1">
-          <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white" />
+      {/* Legend */}
+      <div className="mt-6 px-2">
+        <div className="flex items-center gap-2 text-sm">
+          <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-900" />
           <span className="text-gray-700 dark:text-gray-300">
-            {language === "en"
-              ? "Selected Time"
-              : language === "zh"
-              ? "选定时间"
-              : "選択した時間"}
+            {translations.selectedTime[language]}
           </span>
         </div>
       </div>
