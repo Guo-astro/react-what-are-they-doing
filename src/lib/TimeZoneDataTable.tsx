@@ -1,7 +1,4 @@
-// src/pages/TimeZoneDataTable.tsx
-
-"use client";
-
+// src/lib/main.tsx
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -46,6 +43,11 @@ import {
 } from "../components/ui/form";
 import { Input } from "../components/ui/input";
 import ScheduleProposal from "./components/ScheduleProposal";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../store/store";
+import { toggleFavorite, loadFavorites } from "../store/slices/favoritesSlice";
+import { setLanguage } from "../store/slices/languageSlice";
+import { setReferenceDate, setIsoInput } from "../store/slices/timeZoneSlice";
 
 type Language = "en" | "zh" | "ja";
 
@@ -110,54 +112,27 @@ const translations: Record<Language, Record<string, string>> = {
 };
 
 export const TimeZoneDataTable: React.FC = () => {
-  const [referenceDate, setReferenceDate] = useState<Date>(new Date());
-  const [language, setLanguage] = useState<Language>("en");
+  const dispatch = useDispatch();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [isoInput, setIsoInput] = useState<string>("");
-  const [selectedMeetingTime, setSelectedMeetingTime] =
-    useState<string>("12:00"); // Default meeting time
   const [rowSelection, setRowSelection] = useState({});
 
-  // Load favorites from localStorage
-  useEffect(() => {
-    const storedFavorites = localStorage.getItem("favorites");
-    if (storedFavorites) {
-      setFavorites(new Set(JSON.parse(storedFavorites)));
-    }
-  }, []);
+  // Redux state
+  const { favorites } = useSelector((state: RootState) => state.favorites);
+  const language = useSelector((state: RootState) => state.language.language);
+  const { referenceDate: referenceDateISO, isoInput } = useSelector(
+    (state: RootState) => state.timeZone
+  );
+  const referenceDate = React.useMemo(
+    () => new Date(referenceDateISO),
+    [referenceDateISO]
+  );
+  const selectedMeetingTime = useSelector(
+    (state: RootState) => state.timeZone.selectedMeetingTime
+  );
 
-  // Save favorites to localStorage
-  useEffect(() => {
-    localStorage.setItem("favorites", JSON.stringify(Array.from(favorites)));
-  }, [favorites]);
-
-  // Update referenceDate every minute if no ISO input
-  useEffect(() => {
-    if (!isoInput) {
-      const timer = setInterval(() => {
-        setReferenceDate(new Date());
-      }, 60000);
-      return () => clearInterval(timer);
-    }
-  }, [isoInput]);
-
-  const t = translations[language];
-
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(id)) {
-        updated.delete(id);
-      } else {
-        updated.add(id);
-      }
-      return updated;
-    });
-  };
-
+  // Local state for checkbox component
   const Checkbox = ({
     checked,
     indeterminate,
@@ -177,9 +152,33 @@ export const TimeZoneDataTable: React.FC = () => {
     />
   );
 
+  // Load favorites on mount
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+      dispatch(loadFavorites(JSON.parse(storedFavorites)));
+    }
+  }, [dispatch]);
+
+  // Save favorites on change
+  useEffect(() => {
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+  }, [favorites]);
+
+  // Update referenceDate every minute if no ISO input
+  useEffect(() => {
+    if (!isoInput) {
+      const timer = setInterval(() => {
+        dispatch(setReferenceDate(new Date()));
+      }, 60000);
+      return () => clearInterval(timer);
+    }
+  }, [isoInput, dispatch]);
+
+  const t = translations[language];
+
   const columns = React.useMemo<ColumnDef<TimeZone>[]>(
     () => [
-      // Selection column
       {
         id: "select",
         header: ({ table }) => (
@@ -203,12 +202,12 @@ export const TimeZoneDataTable: React.FC = () => {
         header: "",
         cell: ({ row }) => {
           const zone = row.original;
-          const isFav = favorites.has(zone.id);
+          const isFav = favorites.includes(zone.id);
           return (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                toggleFavorite(zone.id);
+                dispatch(toggleFavorite(zone.id));
               }}
               aria-label={isFav ? "Unfavorite" : "Favorite"}
             >
@@ -266,14 +265,12 @@ export const TimeZoneDataTable: React.FC = () => {
           const zone = row.original;
           const date = computeZoneTime(zone.utc, referenceDate);
 
-          // Return fallback if invalid date
           if (isNaN(date.getTime())) return "Invalid time";
 
-          // Format based on language
           return date.toLocaleTimeString(language, {
             hour: "2-digit",
             minute: "2-digit",
-            hour12: language === "en", // Use AM/PM only for English
+            hour12: language === "en",
           });
         },
         enableSorting: true,
@@ -297,26 +294,23 @@ export const TimeZoneDataTable: React.FC = () => {
         enableFiltering: true,
       },
     ],
-    [t, referenceDate, favorites, language]
+    [t, referenceDate, favorites, language, dispatch]
   );
 
   const table = useReactTable({
     data: timeZones,
     columns,
-    getRowId: (row) => row.id, // Use nanoid-generated ID
-
+    getRowId: (row) => row.id,
     initialState: {
       pagination: { pageSize: 15 },
     },
     state: {
       rowSelection,
-
       sorting,
       columnFilters,
       columnVisibility,
     },
     onRowSelectionChange: setRowSelection,
-
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
@@ -349,20 +343,19 @@ export const TimeZoneDataTable: React.FC = () => {
 
   function onIsoTimeSubmit(data: z.infer<typeof ISOTimeSchema>) {
     const { isoTime } = data;
-    setIsoInput(isoTime);
+    dispatch(setIsoInput(isoTime));
     const parsedDate = new Date(isoTime);
-    setReferenceDate(parsedDate);
+    dispatch(setReferenceDate(parsedDate));
   }
 
   return (
     <div className="container mx-auto p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
-      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-extrabold">{t.title}</h1>
         <div className="flex items-center space-x-4">
           <select
             value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
+            onChange={(e) => dispatch(setLanguage(e.target.value as Language))}
             className="border p-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             aria-label="Select Language"
           >
@@ -373,7 +366,6 @@ export const TimeZoneDataTable: React.FC = () => {
         </div>
       </div>
 
-      {/* ISO Time Form */}
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onIsoTimeSubmit)}
@@ -409,7 +401,6 @@ export const TimeZoneDataTable: React.FC = () => {
         </form>
       </Form>
 
-      {/* Filter Input */}
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter country..."
@@ -422,7 +413,6 @@ export const TimeZoneDataTable: React.FC = () => {
         />
       </div>
 
-      {/* Data Table */}
       <div className="rounded-md border overflow-auto mb-6">
         <Table>
           <TableHeader>
@@ -444,31 +434,29 @@ export const TimeZoneDataTable: React.FC = () => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row) => {
-                return (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className={`${
-                      row.getIsSelected()
-                        ? "bg-blue-50 dark:bg-gray-700"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className={`${
+                    row.getIsSelected()
+                      ? "bg-blue-50 dark:bg-gray-700"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                  }`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : (
               <TableRow>
                 <TableCell
@@ -483,7 +471,6 @@ export const TimeZoneDataTable: React.FC = () => {
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
           variant="outline"
@@ -505,7 +492,6 @@ export const TimeZoneDataTable: React.FC = () => {
         </Button>
       </div>
 
-      {/* Schedule Proposal Section */}
       {selectedTimeZones.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">{t.scheduleProposals}</h2>
@@ -529,9 +515,7 @@ export const TimeZoneDataTable: React.FC = () => {
             timeZones={selectedTimeZones}
             referenceDate={referenceDate}
             language={language}
-            onTimeChange={(newTime) => setSelectedMeetingTime(newTime)}
           />
-          {/* Display Selected Meeting Time */}
           <div className="text-center text-lg font-medium text-gray-800 dark:text-gray-200 mt-4">
             {language === "en"
               ? `Selected Meeting Time: ${selectedMeetingTime}`
@@ -544,5 +528,3 @@ export const TimeZoneDataTable: React.FC = () => {
     </div>
   );
 };
-
-export default TimeZoneDataTable;

@@ -1,1 +1,1 @@
-export { TimeZoneDataTable } from "@/lib/main";
+export { TimeZoneDataTable } from "@/lib/TimeZoneDataTable";

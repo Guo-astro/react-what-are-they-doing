@@ -3,7 +3,6 @@ Project Structure:
 ├── LICENSE
 ├── README.md
 ├── codefetch
-│   └── mycode.md
 ├── components.json
 ├── dist
 │   ├── index.cjs.js
@@ -316,66 +315,66 @@ src/lib/constants.ts
 3 | import iso_zh from "i18n-iso-countries/langs/zh.json";
 4 | import iso_ja from "i18n-iso-countries/langs/ja.json";
 5 | import { getAllCountries, getTimezone } from "countries-and-timezones";
-6 | import { getCountryCallingCode } from "libphonenumber-js";
+6 | import { CountryCode, getCountryCallingCode } from "libphonenumber-js";
 7 | import Holidays from "date-holidays";
 8 | import { nanoid } from "nanoid";
 9 | 
 10 | // TypeScript interfaces
 11 | export interface TimeZone {
 12 |   id: string;
-13 | 
-14 |   country: string;
-15 |   countryName: string;
-16 |   utc: string;
-17 |   code: string;
+13 |   country: string;
+14 |   countryName: string;
+15 |   utc: string;
+16 |   code: string;
+17 |   timeZone: string; // Added property
 18 |   startTime: string;
 19 |   endTime: string;
 20 |   isHoliday?: boolean;
 21 |   holidayName?: string;
-22 | }
-23 | 
-24 | // Initialize i18n
-25 | i18n.registerLocale(iso_en);
-26 | i18n.registerLocale(iso_zh);
-27 | i18n.registerLocale(iso_ja);
-28 | 
-29 | // Utility functions
-30 | const getUtcOffsetString = (offsetMinutes: number): string => {
-31 |   const sign = offsetMinutes >= 0 ? "+" : "-";
-32 |   const absMinutes = Math.abs(offsetMinutes);
-33 |   return `UTC${sign}${String(Math.floor(absMinutes / 60)).padStart(
-34 |     2,
-35 |     "0"
-36 |   )}:${String(absMinutes % 60).padStart(2, "0")}`;
-37 | };
-38 | 
-39 | // Country and timezone data initialization
-40 | const countries = getAllCountries();
-41 | export const countryNames: Record<
-42 |   string,
-43 |   { en: string; zh: string; ja: string }
-44 | > = {};
-45 | export const timeZones: TimeZone[] = [];
-46 | 
-47 | Object.values(countries).forEach((country) => {
-48 |   const isoCode = country.id;
-49 |   const names = {
-50 |     en: i18n.getName(isoCode, "en") || country.name,
-51 |     zh: i18n.getName(isoCode, "zh") || country.name,
-52 |     ja: i18n.getName(isoCode, "ja") || country.name,
-53 |   };
-54 | 
-55 |   countryNames[isoCode] = names;
-56 | 
-57 |   // Get calling code safely
-58 |   let callingCode = "";
-59 |   try {
-60 |     callingCode = `+${getCountryCallingCode(isoCode)}`;
-61 |   } catch (error) {
-62 |     console.warn(`Failed to get calling code for ${isoCode}:`, error);
-63 |   }
-64 | 
-65 |   // Process timezones
+22 |   holidayType?: string;
+23 | }
+24 | 
+25 | // Initialize i18n
+26 | i18n.registerLocale(iso_en);
+27 | i18n.registerLocale(iso_zh);
+28 | i18n.registerLocale(iso_ja);
+29 | 
+30 | // Utility functions
+31 | const getUtcOffsetString = (offsetMinutes: number): string => {
+32 |   const sign = offsetMinutes >= 0 ? "+" : "-";
+33 |   const absMinutes = Math.abs(offsetMinutes);
+34 |   return `UTC${sign}${String(Math.floor(absMinutes / 60)).padStart(
+35 |     2,
+36 |     "0"
+37 |   )}:${String(absMinutes % 60).padStart(2, "0")}`;
+38 | };
+39 | 
+40 | // Country and timezone data initialization
+41 | const countries = getAllCountries();
+42 | export const countryNames: Record<
+43 |   string,
+44 |   { en: string; zh: string; ja: string }
+45 | > = {};
+46 | export const timeZones: TimeZone[] = [];
+47 | 
+48 | Object.values(countries).forEach((country) => {
+49 |   const isoCode = country.id;
+50 |   const names = {
+51 |     en: i18n.getName(isoCode, "en") || country.name,
+52 |     zh: i18n.getName(isoCode, "zh") || country.name,
+53 |     ja: i18n.getName(isoCode, "ja") || country.name,
+54 |   };
+55 | 
+56 |   countryNames[isoCode] = names;
+57 | 
+58 |   // Get calling code safely
+59 |   let callingCode = "";
+60 |   try {
+61 |     callingCode = `+${getCountryCallingCode(isoCode as CountryCode)}`;
+62 |   } catch (error) {
+63 |     console.warn(`Failed to get calling code for ${isoCode}:`, error);
+64 |   }
+65 | 
 66 |   country.timezones.forEach((tzName: string) => {
 67 |     const tz = getTimezone(tzName);
 68 |     if (!tz) return;
@@ -386,112 +385,113 @@ src/lib/constants.ts
 73 |       countryName: names.zh,
 74 |       utc: getUtcOffsetString(tz.utcOffset),
 75 |       code: callingCode,
-76 |       startTime: "09:00",
-77 |       endTime: "17:00",
-78 |     });
-79 |   });
-80 | });
-81 | 
-82 | // Date calculation functions
-83 | export function parseUTCOffset(utc: string) {
-84 |   const match = utc.match(/UTC([+-])(\d{2}):(\d{2})/);
-85 |   if (!match) return null;
-86 | 
-87 |   return {
-88 |     sign: match[1] === "+" ? 1 : -1,
-89 |     hours: parseInt(match[2], 10),
-90 |     minutes: parseInt(match[3], 10),
-91 |   };
-92 | }
-93 | 
-94 | export function computeZoneTime(utc: string, referenceDate: Date): Date {
-95 |   const offset = parseUTCOffset(utc);
-96 |   if (!offset) return new Date(NaN);
-97 | 
-98 |   const totalMinutes = (offset.hours * 60 + offset.minutes) * offset.sign;
-99 |   const adjustedTime = new Date(referenceDate.getTime() + totalMinutes * 60000);
-100 |   return adjustedTime;
-101 | }
-102 | 
-103 | export function parseTimeToMinutes(timeStr: string): number {
-104 |   const [hours, minutes] = timeStr.split(":").map(Number);
-105 |   return hours * 60 + (minutes || 0);
-106 | }
-107 | 
-108 | // Status calculation with proper type safety
-109 | interface StatusResult {
-110 |   label: string;
-111 |   colorClass: string;
-112 | }
-113 | 
-114 | export function getStatus(zone: TimeZone, referenceDate: Date): StatusResult {
-115 |   try {
-116 |     const localDate = computeZoneTime(zone.utc, referenceDate);
-117 |     if (isNaN(localDate.getTime())) return invalidDateResult();
-118 | 
-119 |     const currentMinutes = localDate.getHours() * 60 + localDate.getMinutes();
-120 |     const startMinutes = parseTimeToMinutes(zone.startTime);
-121 |     const endMinutes = parseTimeToMinutes(zone.endTime);
-122 | 
-123 |     // Check weekend
-124 |     const isWeekend = localDate.getDay() % 6 === 0;
-125 | 
-126 |     // Check holidays
-127 |     const hd = new Holidays(zone.country);
-128 |     const holidays = hd.getHolidays(localDate.getFullYear());
-129 |     const isHoliday = holidays.some(
-130 |       (h) => h.date === localDate.toISOString().split("T")[0]
-131 |     );
-132 | 
-133 |     // Determine status
-134 |     if (isHoliday) return holidayResult();
-135 |     if (isWeekend) return weekendResult(localDate);
-136 | 
-137 |     return calculateWorkStatus(currentMinutes, startMinutes, endMinutes);
-138 |   } catch (error) {
-139 |     console.error("Error calculating status:", error);
-140 |     return { label: "Error", colorClass: "bg-gray-500 text-white" };
-141 |   }
-142 | }
-143 | 
-144 | // Helper functions for status calculation
-145 | function invalidDateResult(): StatusResult {
-146 |   return { label: "Invalid Time", colorClass: "bg-gray-500 text-white" };
-147 | }
-148 | 
-149 | function holidayResult(): StatusResult {
-150 |   return { label: "Holiday", colorClass: "bg-purple-500 text-white" };
-151 | }
-152 | 
-153 | function weekendResult(date: Date): StatusResult {
-154 |   return {
-155 |     label: date.getDay() === 0 ? "Sunday" : "Saturday",
-156 |     colorClass: "bg-red-500 text-white",
-157 |   };
-158 | }
-159 | 
-160 | function calculateWorkStatus(
-161 |   current: number,
-162 |   start: number,
-163 |   end: number
-164 | ): StatusResult {
-165 |   const isWorking =
-166 |     start < end
-167 |       ? current >= start && current < end
-168 |       : current >= start || current < end;
-169 | 
-170 |   if (isWorking) {
-171 |     const timeLeft = end - current;
-172 |     return timeLeft <= 30
-173 |       ? { label: "About to finish", colorClass: "bg-yellow-500 text-white" }
-174 |       : { label: "Working", colorClass: "bg-green-500 text-white" };
-175 |   }
-176 | 
-177 |   const timeUntil = start - current;
-178 |   return timeUntil <= 30 && timeUntil > 0
-179 |     ? { label: "About to start", colorClass: "bg-blue-500 text-white" }
-180 |     : { label: "Closed", colorClass: "bg-gray-500 text-white" };
-181 | }
+76 |       timeZone: tz.name, // Populate timeZone
+77 |       startTime: "09:00",
+78 |       endTime: "17:00",
+79 |     });
+80 |   });
+81 | });
+82 | 
+83 | // Date calculation functions
+84 | export function parseUTCOffset(utc: string) {
+85 |   const match = utc.match(/UTC([+-])(\d{2}):(\d{2})/);
+86 |   if (!match) return null;
+87 | 
+88 |   return {
+89 |     sign: match[1] === "+" ? 1 : -1,
+90 |     hours: parseInt(match[2], 10),
+91 |     minutes: parseInt(match[3], 10),
+92 |   };
+93 | }
+94 | 
+95 | export function computeZoneTime(utc: string, referenceDate: Date): Date {
+96 |   const offset = parseUTCOffset(utc);
+97 |   if (!offset) return new Date(NaN);
+98 | 
+99 |   const totalMinutes = (offset.hours * 60 + offset.minutes) * offset.sign;
+100 |   const adjustedTime = new Date(referenceDate.getTime() + totalMinutes * 60000);
+101 |   return adjustedTime;
+102 | }
+103 | 
+104 | export function parseTimeToMinutes(timeStr: string): number {
+105 |   const [hours, minutes] = timeStr.split(":").map(Number);
+106 |   return hours * 60 + (minutes || 0);
+107 | }
+108 | 
+109 | // Status calculation with proper type safety
+110 | interface StatusResult {
+111 |   label: string;
+112 |   colorClass: string;
+113 | }
+114 | 
+115 | export function getStatus(zone: TimeZone, referenceDate: Date): StatusResult {
+116 |   try {
+117 |     const localDate = computeZoneTime(zone.utc, referenceDate);
+118 |     if (isNaN(localDate.getTime())) return invalidDateResult();
+119 | 
+120 |     const currentMinutes = localDate.getHours() * 60 + localDate.getMinutes();
+121 |     const startMinutes = parseTimeToMinutes(zone.startTime);
+122 |     const endMinutes = parseTimeToMinutes(zone.endTime);
+123 | 
+124 |     // Check weekend
+125 |     const isWeekend = localDate.getDay() % 6 === 0;
+126 | 
+127 |     // Check holidays
+128 |     const hd = new Holidays(zone.country);
+129 |     const holidays = hd.getHolidays(localDate.getFullYear());
+130 |     const isHoliday = holidays.some(
+131 |       (h) => h.date === localDate.toISOString().split("T")[0]
+132 |     );
+133 | 
+134 |     // Determine status
+135 |     if (isHoliday) return holidayResult();
+136 |     if (isWeekend) return weekendResult(localDate);
+137 | 
+138 |     return calculateWorkStatus(currentMinutes, startMinutes, endMinutes);
+139 |   } catch (error) {
+140 |     console.error("Error calculating status:", error);
+141 |     return { label: "Error", colorClass: "bg-gray-500 text-white" };
+142 |   }
+143 | }
+144 | 
+145 | // Helper functions for status calculation
+146 | function invalidDateResult(): StatusResult {
+147 |   return { label: "Invalid Time", colorClass: "bg-gray-500 text-white" };
+148 | }
+149 | 
+150 | function holidayResult(): StatusResult {
+151 |   return { label: "Holiday", colorClass: "bg-purple-500 text-white" };
+152 | }
+153 | 
+154 | function weekendResult(date: Date): StatusResult {
+155 |   return {
+156 |     label: date.getDay() === 0 ? "Sunday" : "Saturday",
+157 |     colorClass: "bg-red-500 text-white",
+158 |   };
+159 | }
+160 | 
+161 | function calculateWorkStatus(
+162 |   current: number,
+163 |   start: number,
+164 |   end: number
+165 | ): StatusResult {
+166 |   const isWorking =
+167 |     start < end
+168 |       ? current >= start && current < end
+169 |       : current >= start || current < end;
+170 | 
+171 |   if (isWorking) {
+172 |     const timeLeft = end - current;
+173 |     return timeLeft <= 30
+174 |       ? { label: "About to finish", colorClass: "bg-yellow-500 text-white" }
+175 |       : { label: "Working", colorClass: "bg-green-500 text-white" };
+176 |   }
+177 | 
+178 |   const timeUntil = start - current;
+179 |   return timeUntil <= 30 && timeUntil > 0
+180 |     ? { label: "About to start", colorClass: "bg-blue-500 text-white" }
+181 |     : { label: "Closed", colorClass: "bg-gray-500 text-white" };
+182 | }
 ```
 
 src/lib/main.tsx
@@ -1072,6 +1072,29 @@ src/lib/utils.ts
 4 | export function cn(...inputs: ClassValue[]) {
 5 |   return twMerge(clsx(inputs))
 6 | }
+```
+
+src/store/store.ts
+```
+1 | // src/store/store.ts
+2 | import { configureStore } from "@reduxjs/toolkit";
+3 | import { favoritesReducer } from "./slices/favoritesSlice";
+4 | import { languageReducer } from "./slices/languageSlice";
+5 | import { timeZoneReducer } from "./slices/timeZoneSlice";
+6 | 
+7 | const store = configureStore({
+8 |   reducer: {
+9 |     favorites: favoritesReducer,
+10 |     language: languageReducer,
+11 |     timeZone: timeZoneReducer,
+12 |   },
+13 | });
+14 | 
+15 | // Infer the `RootState` and `AppDispatch` types from the store itself
+16 | export type RootState = ReturnType<typeof store.getState>;
+17 | export type AppDispatch = typeof store.dispatch;
+18 | 
+19 | export default store;
 ```
 
 src/utils/DateUtils.ts
@@ -2406,7 +2429,7 @@ src/lib/components/ScheduleProposal.tsx
 169 | 
 170 |                 {/* Local Time Display */}
 171 |                 <div className="mt-8 text-center text-sm text-gray-800 dark:text-gray-200">
-172 |                   {formattedTime} ({zone.countryCode})
+172 |                   {formattedTime} ({zone.countryName})
 173 |                 </div>
 174 |               </div>
 175 |             );
@@ -2437,4 +2460,105 @@ src/lib/components/ScheduleProposal.tsx
 200 | };
 201 | 
 202 | export default ScheduleProposal;
+```
+
+src/store/slices/favoritesSlice.ts
+```
+1 | // src/store/slices/favoritesSlice.ts
+2 | import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+3 | 
+4 | interface FavoritesState {
+5 |   favorites: Set<string>;
+6 | }
+7 | 
+8 | const initialState: FavoritesState = {
+9 |   favorites: new Set<string>(),
+10 | };
+11 | 
+12 | const favoritesSlice = createSlice({
+13 |   name: "favorites",
+14 |   initialState,
+15 |   reducers: {
+16 |     loadFavorites(state, action: PayloadAction<string[]>) {
+17 |       state.favorites = new Set(action.payload);
+18 |     },
+19 |     toggleFavorite(state, action: PayloadAction<string>) {
+20 |       if (state.favorites.has(action.payload)) {
+21 |         state.favorites.delete(action.payload);
+22 |       } else {
+23 |         state.favorites.add(action.payload);
+24 |       }
+25 |     },
+26 |   },
+27 | });
+28 | 
+29 | export const { loadFavorites, toggleFavorite } = favoritesSlice.actions;
+30 | export const favoritesReducer = favoritesSlice.reducer;
+```
+
+src/store/slices/languageSlice.ts
+```
+1 | // src/store/slices/languageSlice.ts
+2 | import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+3 | 
+4 | type Language = "en" | "zh" | "ja";
+5 | 
+6 | interface LanguageState {
+7 |   language: Language;
+8 | }
+9 | 
+10 | const initialState: LanguageState = {
+11 |   language: "en",
+12 | };
+13 | 
+14 | const languageSlice = createSlice({
+15 |   name: "language",
+16 |   initialState,
+17 |   reducers: {
+18 |     setLanguage(state, action: PayloadAction<Language>) {
+19 |       state.language = action.payload;
+20 |     },
+21 |   },
+22 | });
+23 | 
+24 | export const { setLanguage } = languageSlice.actions;
+25 | export const languageReducer = languageSlice.reducer;
+```
+
+src/store/slices/timeZoneSlice.ts
+```
+1 | // src/store/slices/timeZoneSlice.ts
+2 | import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+3 | 
+4 | interface TimeZoneState {
+5 |   referenceDate: Date;
+6 |   isoInput: string;
+7 |   selectedMeetingTime: string;
+8 | }
+9 | 
+10 | const initialState: TimeZoneState = {
+11 |   referenceDate: new Date(),
+12 |   isoInput: "",
+13 |   selectedMeetingTime: "12:00",
+14 | };
+15 | 
+16 | const timeZoneSlice = createSlice({
+17 |   name: "timeZone",
+18 |   initialState,
+19 |   reducers: {
+20 |     setReferenceDate(state, action: PayloadAction<Date>) {
+21 |       state.referenceDate = action.payload;
+22 |     },
+23 |     setIsoInput(state, action: PayloadAction<string>) {
+24 |       state.isoInput = action.payload;
+25 |     },
+26 |     setSelectedMeetingTime(state, action: PayloadAction<string>) {
+27 |       state.selectedMeetingTime = action.payload;
+28 |     },
+29 |   },
+30 | });
+31 | 
+32 | export const { setReferenceDate, setIsoInput, setSelectedMeetingTime } =
+33 |   timeZoneSlice.actions;
+34 | export const timeZoneReducer = timeZoneSlice.reducer;
 ```

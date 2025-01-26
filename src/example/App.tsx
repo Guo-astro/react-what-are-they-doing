@@ -1,4 +1,4 @@
-import { TimeZoneDataTable } from "@/lib/main";
+import { TimeZoneDataTable } from "@/lib/TimeZoneDataTable";
 import Header from "./Header";
 
 function App() {

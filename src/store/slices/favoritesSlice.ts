@@ -1,12 +1,11 @@
-// src/store/slices/favoritesSlice.ts
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface FavoritesState {
-  favorites: Set<string>;
+  favorites: string[];
 }
 
 const initialState: FavoritesState = {
-  favorites: new Set<string>(),
+  favorites: [],
 };
 
 const favoritesSlice = createSlice({
@@ -14,13 +13,14 @@ const favoritesSlice = createSlice({
   initialState,
   reducers: {
     loadFavorites(state, action: PayloadAction<string[]>) {
-      state.favorites = new Set(action.payload);
+      state.favorites = action.payload;
     },
     toggleFavorite(state, action: PayloadAction<string>) {
-      if (state.favorites.has(action.payload)) {
-        state.favorites.delete(action.payload);
+      const index = state.favorites.indexOf(action.payload);
+      if (index !== -1) {
+        state.favorites.splice(index, 1);
       } else {
-        state.favorites.add(action.payload);
+        state.favorites.push(action.payload);
       }
     },
   },
