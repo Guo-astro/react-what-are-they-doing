@@ -3,7 +3,7 @@ import iso_en from "i18n-iso-countries/langs/en.json";
 import iso_zh from "i18n-iso-countries/langs/zh.json";
 import iso_ja from "i18n-iso-countries/langs/ja.json";
 import { getAllCountries, getTimezone } from "countries-and-timezones";
-import { getCountryCallingCode } from "libphonenumber-js";
+import { CountryCode, getCountryCallingCode } from "libphonenumber-js";
 import Holidays from "date-holidays";
 import { nanoid } from "nanoid";
 
@@ -58,7 +58,7 @@ Object.values(countries).forEach((country) => {
   // Get calling code safely
   let callingCode = "";
   try {
-    callingCode = `+${getCountryCallingCode(isoCode)}`;
+    callingCode = `+${getCountryCallingCode(isoCode as CountryCode)}`;
   } catch (error) {
     console.warn(`Failed to get calling code for ${isoCode}:`, error);
   }
