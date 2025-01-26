@@ -169,7 +169,7 @@ const ScheduleProposal: React.FC<ScheduleProposalProps> = ({
 
                 {/* Local Time Display */}
                 <div className="mt-8 text-center text-sm text-gray-800 dark:text-gray-200">
-                  {formattedTime} ({zone.countryCode})
+                  {formattedTime} ({zone.countryName})
                 </div>
               </div>
             );

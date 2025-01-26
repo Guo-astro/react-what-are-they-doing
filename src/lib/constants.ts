@@ -10,15 +10,16 @@ import { nanoid } from "nanoid";
 // TypeScript interfaces
 export interface TimeZone {
   id: string;
-
   country: string;
   countryName: string;
   utc: string;
   code: string;
+  timeZone: string; // Added property
   startTime: string;
   endTime: string;
   isHoliday?: boolean;
   holidayName?: string;
+  holidayType?: string;
 }
 
 // Initialize i18n
@@ -62,7 +63,6 @@ Object.values(countries).forEach((country) => {
     console.warn(`Failed to get calling code for ${isoCode}:`, error);
   }
 
-  // Process timezones
   country.timezones.forEach((tzName: string) => {
     const tz = getTimezone(tzName);
     if (!tz) return;
@@ -73,6 +73,7 @@ Object.values(countries).forEach((country) => {
       countryName: names.zh,
       utc: getUtcOffsetString(tz.utcOffset),
       code: callingCode,
+      timeZone: tz.name, // Populate timeZone
       startTime: "09:00",
       endTime: "17:00",
     });

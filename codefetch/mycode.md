@@ -2,6 +2,8 @@ Project Structure:
 ├── CODE_OF_CONDUCT.md
 ├── LICENSE
 ├── README.md
+├── codefetch
+│   └── mycode.md
 ├── components.json
 ├── dist
 │   ├── index.cjs.js
@@ -309,544 +311,739 @@ src/lib/biiz-utils.ts
 
 src/lib/constants.ts
 ```
-1 | // types.ts (or similar file for data definitions and utilities)
-2 | export interface TimeZone {
-3 |     country: string;
-4 |     utc: string;
-5 |     code: string;
-6 |     startTime: string;
-7 |     endTime: string;
-8 |   }
-9 |   
-10 |   export const timeZones: TimeZone[] = [
-11 |     { country: "美国",       utc: "UTC-05:00", code: "+1",   startTime: "20:00", endTime: "04:00" },
-12 |     { country: "阿根廷",     utc: "UTC-03:00", code: "+54",  startTime: "02:00", endTime: "10:00" },
-13 |     { country: "英国",       utc: "UTC+00:00", code: "+44",  startTime: "09:00", endTime: "17:00" },
-14 |     { country: "德国",       utc: "UTC+01:00", code: "+49",  startTime: "09:00", endTime: "17:00" },
-15 |     { country: "印度",       utc: "UTC+05:30", code: "+91",  startTime: "09:00", endTime: "17:00" },
-16 |     { country: "日本",       utc: "UTC+09:00", code: "+81",  startTime: "09:00", endTime: "17:00" },
-17 |     { country: "澳大利亚",   utc: "UTC+10:00", code: "+61",  startTime: "09:00", endTime: "17:00" },
-18 |     { country: "巴西",       utc: "UTC-03:00", code: "+55",  startTime: "09:00", endTime: "17:00" },
-19 |     { country: "俄罗斯",     utc: "UTC+03:00", code: "+7",   startTime: "09:00", endTime: "17:00" },
-20 |     { country: "中国",       utc: "UTC+08:00", code: "+86",  startTime: "09:00", endTime: "17:00" },
-21 |     { country: "法国",       utc: "UTC+01:00", code: "+33",  startTime: "09:00", endTime: "17:00" },
-22 |     { country: "加拿大",     utc: "UTC-05:00", code: "+1",   startTime: "09:00", endTime: "17:00" },
-23 |     { country: "墨西哥",     utc: "UTC-06:00", code: "+52",  startTime: "09:00", endTime: "17:00" },
-24 |     { country: "南非",       utc: "UTC+02:00", code: "+27",  startTime: "09:00", endTime: "17:00" },
-25 |     { country: "韩国",       utc: "UTC+09:00", code: "+82",  startTime: "09:00", endTime: "17:00" },
-26 |     { country: "意大利",     utc: "UTC+01:00", code: "+39",  startTime: "09:00", endTime: "17:00" },
-27 |     { country: "西班牙",     utc: "UTC+01:00", code: "+34",  startTime: "09:00", endTime: "17:00" },
-28 |     { country: "瑞典",       utc: "UTC+01:00", code: "+46",  startTime: "09:00", endTime: "17:00" },
-29 |     { country: "挪威",       utc: "UTC+01:00", code: "+47",  startTime: "09:00", endTime: "17:00" },
-30 |     { country: "芬兰",       utc: "UTC+02:00", code: "+358", startTime: "09:00", endTime: "17:00" },
-31 |     { country: "希腊",       utc: "UTC+02:00", code: "+30",  startTime: "09:00", endTime: "17:00" },
-32 |     { country: "土耳其",     utc: "UTC+03:00", code: "+90",  startTime: "09:00", endTime: "17:00" },
-33 |     { country: "以色列",     utc: "UTC+02:00", code: "+972", startTime: "09:00", endTime: "17:00" },
-34 |     { country: "埃及",       utc: "UTC+02:00", code: "+20",  startTime: "09:00", endTime: "17:00" },
-35 |     { country: "沙特阿拉伯", utc: "UTC+03:00", code: "+966", startTime: "09:00", endTime: "17:00" },
-36 |     { country: "阿联酋",     utc: "UTC+04:00", code: "+971", startTime: "09:00", endTime: "17:00" },
-37 |     { country: "新西兰",     utc: "UTC+12:00", code: "+64",  startTime: "09:00", endTime: "17:00" },
-38 |     { country: "菲律宾",     utc: "UTC+08:00", code: "+63",  startTime: "09:00", endTime: "17:00" },
-39 |     { country: "泰国",       utc: "UTC+07:00", code: "+66",  startTime: "09:00", endTime: "17:00" },
-40 |     { country: "越南",       utc: "UTC+07:00", code: "+84",  startTime: "09:00", endTime: "17:00" },
-41 |     { country: "马来西亚",   utc: "UTC+08:00", code: "+60",  startTime: "09:00", endTime: "17:00" },
-42 |     { country: "印度尼西亚", utc: "UTC+07:00", code: "+62",  startTime: "09:00", endTime: "17:00" },
-43 |     { country: "瑞士",       utc: "UTC+01:00", code: "+41",  startTime: "09:00", endTime: "17:00" },
-44 |     { country: "比利时",     utc: "UTC+01:00", code: "+32",  startTime: "09:00", endTime: "17:00" },
-45 |     { country: "荷兰",       utc: "UTC+01:00", code: "+31",  startTime: "09:00", endTime: "17:00" },
-46 |     { country: "波兰",       utc: "UTC+01:00", code: "+48",  startTime: "09:00", endTime: "17:00" },
-47 |     { country: "捷克",       utc: "UTC+01:00", code: "+420", startTime: "09:00", endTime: "17:00" },
-48 |     { country: "奥地利",     utc: "UTC+01:00", code: "+43",  startTime: "09:00", endTime: "17:00" },
-49 |     { country: "丹麦",       utc: "UTC+01:00", code: "+45",  startTime: "09:00", endTime: "17:00" },
-50 |     { country: "葡萄牙",     utc: "UTC+00:00", code: "+351", startTime: "09:00", endTime: "17:00" },
-51 |     { country: "冰岛",       utc: "UTC+00:00", code: "+354", startTime: "09:00", endTime: "17:00" },
-52 |     // Add more time zones if needed...
-53 |   ];
-54 |   
-55 |   export const countryNames: Record<string, { en: string; zh: string; ja: string }> = {
-56 |     "美国": { en: "United States", zh: "美国", ja: "アメリカ" },
-57 |     "阿根廷": { en: "Argentina", zh: "阿根廷", ja: "アルゼンチン" },
-58 |     "英国": { en: "United Kingdom", zh: "英国", ja: "イギリス" },
-59 |     "德国": { en: "Germany", zh: "德国", ja: "ドイツ" },
-60 |     "印度": { en: "India", zh: "印度", ja: "インド" },
-61 |     "日本": { en: "Japan", zh: "日本", ja: "日本" },
-62 |     "澳大利亚": { en: "Australia", zh: "澳大利亚", ja: "オーストラリア" },
-63 |     "巴西": { en: "Brazil", zh: "巴西", ja: "ブラジル" },
-64 |     "俄罗斯": { en: "Russia", zh: "俄罗斯", ja: "ロシア" },
-65 |     "中国": { en: "China", zh: "中国", ja: "中国" },
-66 |     "法国": { en: "France", zh: "法国", ja: "フランス" },
-67 |     "加拿大": { en: "Canada", zh: "加拿大", ja: "カナダ" },
-68 |     "墨西哥": { en: "Mexico", zh: "墨西哥", ja: "メキシコ" },
-69 |     "南非": { en: "South Africa", zh: "南非", ja: "南アフリカ" },
-70 |     "韩国": { en: "South Korea", zh: "韩国", ja: "韓国" },
-71 |     "意大利": { en: "Italy", zh: "意大利", ja: "イタリア" },
-72 |     "西班牙": { en: "Spain", zh: "西班牙", ja: "スペイン" },
-73 |     "瑞典": { en: "Sweden", zh: "瑞典", ja: "スウェーデン" },
-74 |     "挪威": { en: "Norway", zh: "挪威", ja: "ノルウェー" },
-75 |     "芬兰": { en: "Finland", zh: "芬兰", ja: "フィンランド" },
-76 |     "希腊": { en: "Greece", zh: "希腊", ja: "ギリシャ" },
-77 |     "土耳其": { en: "Turkey", zh: "土耳其", ja: "トルコ" },
-78 |     "以色列": { en: "Israel", zh: "以色列", ja: "イスラエル" },
-79 |     "埃及": { en: "Egypt", zh: "埃及", ja: "エジプト" },
-80 |     "沙特阿拉伯": { en: "Saudi Arabia", zh: "沙特阿拉伯", ja: "サウジアラビア" },
-81 |     "阿联酋": { en: "United Arab Emirates", zh: "阿联酋", ja: "アラブ首長国連邦" },
-82 |     "新西兰": { en: "New Zealand", zh: "新西兰", ja: "ニュージーランド" },
-83 |     "菲律宾": { en: "Philippines", zh: "菲律宾", ja: "フィリピン" },
-84 |     "泰国": { en: "Thailand", zh: "泰国", ja: "タイ" },
-85 |     "越南": { en: "Vietnam", zh: "越南", ja: "ベトナム" },
-86 |     "马来西亚": { en: "Malaysia", zh: "马来西亚", ja: "マレーシア" },
-87 |     "印度尼西亚": { en: "Indonesia", zh: "印度尼西亚", ja: "インドネシア" },
-88 |     "瑞士": { en: "Switzerland", zh: "瑞士", ja: "スイス" },
-89 |     "比利时": { en: "Belgium", zh: "比利时", ja: "ベルギー" },
-90 |     "荷兰": { en: "Netherlands", zh: "荷兰", ja: "オランダ" },
-91 |     "波兰": { en: "Poland", zh: "波兰", ja: "ポーランド" },
-92 |     "捷克": { en: "Czech Republic", zh: "捷克", ja: "チェコ" },
-93 |     "奥地利": { en: "Austria", zh: "奥地利", ja: "オーストリア" },
-94 |     "丹麦": { en: "Denmark", zh: "丹麦", ja: "デンマーク" },
-95 |     "葡萄牙": { en: "Portugal", zh: "葡萄牙", ja: "ポルトガル" },
-96 |     "冰岛": { en: "Iceland", zh: "冰岛", ja: "アイスランド" },
-97 |     // Add more country translations as needed...
-98 |   };
-99 |   
-100 |   // Utility functions
-101 |   export function parseUTCOffset(utc: string): { sign: number; hours: number; minutes: number } | null {
-102 |     const match = utc.match(/UTC([+-])(\d{2}):(\d{2})/);
-103 |     if (!match) return null;
-104 |     const sign = match[1] === '+' ? 1 : -1;
-105 |     const hours = parseInt(match[2], 10);
-106 |     const minutes = parseInt(match[3], 10);
-107 |     return { sign, hours, minutes };
-108 |   }
-109 |   
-110 |   export function computeZoneTime(utc: string, referenceDate: Date): string {
-111 |     const offset = parseUTCOffset(utc);
-112 |     if (!offset) return 'Invalid UTC';
-113 |     const utcTime = new Date(referenceDate.getTime() + referenceDate.getTimezoneOffset() * 60000);
-114 |     utcTime.setHours(utcTime.getHours() + offset.sign * offset.hours);
-115 |     utcTime.setMinutes(utcTime.getMinutes() + offset.sign * offset.minutes);
-116 |     const hours = utcTime.getHours().toString().padStart(2, '0');
-117 |     const minutes = utcTime.getMinutes().toString().padStart(2, '0');
-118 |     return `${hours}:${minutes}`;
-119 |   }
-120 |   
-121 |   export function parseTimeToMinutes(timeStr: string): number {
-122 |     const [hours, minutes] = timeStr.split(':').map(Number);
-123 |     return hours * 60 + minutes;
-124 |   }
-125 |   
-126 |   export function getStatus(zone: TimeZone, current: string): { label: string; colorClass: string } {
-127 |     const currentMinutes = parseTimeToMinutes(current);
-128 |     const startMinutes = parseTimeToMinutes(zone.startTime);
-129 |     const endMinutes = parseTimeToMinutes(zone.endTime);
-130 |     let isWorking = false;
-131 |     if (startMinutes < endMinutes) {
-132 |       isWorking = currentMinutes >= startMinutes && currentMinutes < endMinutes;
-133 |     } else {
-134 |       isWorking = currentMinutes >= startMinutes || currentMinutes < endMinutes;
-135 |     }
-136 |     const aboutToStart = (startMinutes - currentMinutes >= 0 && startMinutes - currentMinutes <= 30) ||
-137 |                          (startMinutes < endMinutes && currentMinutes < startMinutes && startMinutes - currentMinutes <= 30);
-138 |     const aboutToFinish = (currentMinutes - endMinutes >= 0 && currentMinutes - endMinutes <= 30) ||
-139 |                           (startMinutes > endMinutes && currentMinutes < endMinutes && endMinutes - currentMinutes <= 30);
-140 |   
-141 |     if (isWorking) {
-142 |       if (aboutToFinish) {
-143 |         return { label: 'About to finish', colorClass: 'bg-yellow-500 text-white' };
-144 |       }
-145 |       return { label: 'Working', colorClass: 'bg-green-500 text-white' };
-146 |     } else {
-147 |       if (aboutToStart) {
-148 |         return { label: 'About to start', colorClass: 'bg-blue-500 text-white' };
-149 |       }
-150 |       return { label: 'Sleeping', colorClass: 'bg-gray-500 text-white' };
-151 |     }
-152 |   }
-153 |   
+1 | import i18n from "i18n-iso-countries";
+2 | import iso_en from "i18n-iso-countries/langs/en.json";
+3 | import iso_zh from "i18n-iso-countries/langs/zh.json";
+4 | import iso_ja from "i18n-iso-countries/langs/ja.json";
+5 | import { getAllCountries, getTimezone } from "countries-and-timezones";
+6 | import { getCountryCallingCode } from "libphonenumber-js";
+7 | import Holidays from "date-holidays";
+8 | import { nanoid } from "nanoid";
+9 | 
+10 | // TypeScript interfaces
+11 | export interface TimeZone {
+12 |   id: string;
+13 | 
+14 |   country: string;
+15 |   countryName: string;
+16 |   utc: string;
+17 |   code: string;
+18 |   startTime: string;
+19 |   endTime: string;
+20 |   isHoliday?: boolean;
+21 |   holidayName?: string;
+22 | }
+23 | 
+24 | // Initialize i18n
+25 | i18n.registerLocale(iso_en);
+26 | i18n.registerLocale(iso_zh);
+27 | i18n.registerLocale(iso_ja);
+28 | 
+29 | // Utility functions
+30 | const getUtcOffsetString = (offsetMinutes: number): string => {
+31 |   const sign = offsetMinutes >= 0 ? "+" : "-";
+32 |   const absMinutes = Math.abs(offsetMinutes);
+33 |   return `UTC${sign}${String(Math.floor(absMinutes / 60)).padStart(
+34 |     2,
+35 |     "0"
+36 |   )}:${String(absMinutes % 60).padStart(2, "0")}`;
+37 | };
+38 | 
+39 | // Country and timezone data initialization
+40 | const countries = getAllCountries();
+41 | export const countryNames: Record<
+42 |   string,
+43 |   { en: string; zh: string; ja: string }
+44 | > = {};
+45 | export const timeZones: TimeZone[] = [];
+46 | 
+47 | Object.values(countries).forEach((country) => {
+48 |   const isoCode = country.id;
+49 |   const names = {
+50 |     en: i18n.getName(isoCode, "en") || country.name,
+51 |     zh: i18n.getName(isoCode, "zh") || country.name,
+52 |     ja: i18n.getName(isoCode, "ja") || country.name,
+53 |   };
+54 | 
+55 |   countryNames[isoCode] = names;
+56 | 
+57 |   // Get calling code safely
+58 |   let callingCode = "";
+59 |   try {
+60 |     callingCode = `+${getCountryCallingCode(isoCode)}`;
+61 |   } catch (error) {
+62 |     console.warn(`Failed to get calling code for ${isoCode}:`, error);
+63 |   }
+64 | 
+65 |   // Process timezones
+66 |   country.timezones.forEach((tzName: string) => {
+67 |     const tz = getTimezone(tzName);
+68 |     if (!tz) return;
+69 | 
+70 |     timeZones.push({
+71 |       id: `${country.id}-${nanoid()}`, // Unique combination
+72 |       country: isoCode,
+73 |       countryName: names.zh,
+74 |       utc: getUtcOffsetString(tz.utcOffset),
+75 |       code: callingCode,
+76 |       startTime: "09:00",
+77 |       endTime: "17:00",
+78 |     });
+79 |   });
+80 | });
+81 | 
+82 | // Date calculation functions
+83 | export function parseUTCOffset(utc: string) {
+84 |   const match = utc.match(/UTC([+-])(\d{2}):(\d{2})/);
+85 |   if (!match) return null;
+86 | 
+87 |   return {
+88 |     sign: match[1] === "+" ? 1 : -1,
+89 |     hours: parseInt(match[2], 10),
+90 |     minutes: parseInt(match[3], 10),
+91 |   };
+92 | }
+93 | 
+94 | export function computeZoneTime(utc: string, referenceDate: Date): Date {
+95 |   const offset = parseUTCOffset(utc);
+96 |   if (!offset) return new Date(NaN);
+97 | 
+98 |   const totalMinutes = (offset.hours * 60 + offset.minutes) * offset.sign;
+99 |   const adjustedTime = new Date(referenceDate.getTime() + totalMinutes * 60000);
+100 |   return adjustedTime;
+101 | }
+102 | 
+103 | export function parseTimeToMinutes(timeStr: string): number {
+104 |   const [hours, minutes] = timeStr.split(":").map(Number);
+105 |   return hours * 60 + (minutes || 0);
+106 | }
+107 | 
+108 | // Status calculation with proper type safety
+109 | interface StatusResult {
+110 |   label: string;
+111 |   colorClass: string;
+112 | }
+113 | 
+114 | export function getStatus(zone: TimeZone, referenceDate: Date): StatusResult {
+115 |   try {
+116 |     const localDate = computeZoneTime(zone.utc, referenceDate);
+117 |     if (isNaN(localDate.getTime())) return invalidDateResult();
+118 | 
+119 |     const currentMinutes = localDate.getHours() * 60 + localDate.getMinutes();
+120 |     const startMinutes = parseTimeToMinutes(zone.startTime);
+121 |     const endMinutes = parseTimeToMinutes(zone.endTime);
+122 | 
+123 |     // Check weekend
+124 |     const isWeekend = localDate.getDay() % 6 === 0;
+125 | 
+126 |     // Check holidays
+127 |     const hd = new Holidays(zone.country);
+128 |     const holidays = hd.getHolidays(localDate.getFullYear());
+129 |     const isHoliday = holidays.some(
+130 |       (h) => h.date === localDate.toISOString().split("T")[0]
+131 |     );
+132 | 
+133 |     // Determine status
+134 |     if (isHoliday) return holidayResult();
+135 |     if (isWeekend) return weekendResult(localDate);
+136 | 
+137 |     return calculateWorkStatus(currentMinutes, startMinutes, endMinutes);
+138 |   } catch (error) {
+139 |     console.error("Error calculating status:", error);
+140 |     return { label: "Error", colorClass: "bg-gray-500 text-white" };
+141 |   }
+142 | }
+143 | 
+144 | // Helper functions for status calculation
+145 | function invalidDateResult(): StatusResult {
+146 |   return { label: "Invalid Time", colorClass: "bg-gray-500 text-white" };
+147 | }
+148 | 
+149 | function holidayResult(): StatusResult {
+150 |   return { label: "Holiday", colorClass: "bg-purple-500 text-white" };
+151 | }
+152 | 
+153 | function weekendResult(date: Date): StatusResult {
+154 |   return {
+155 |     label: date.getDay() === 0 ? "Sunday" : "Saturday",
+156 |     colorClass: "bg-red-500 text-white",
+157 |   };
+158 | }
+159 | 
+160 | function calculateWorkStatus(
+161 |   current: number,
+162 |   start: number,
+163 |   end: number
+164 | ): StatusResult {
+165 |   const isWorking =
+166 |     start < end
+167 |       ? current >= start && current < end
+168 |       : current >= start || current < end;
+169 | 
+170 |   if (isWorking) {
+171 |     const timeLeft = end - current;
+172 |     return timeLeft <= 30
+173 |       ? { label: "About to finish", colorClass: "bg-yellow-500 text-white" }
+174 |       : { label: "Working", colorClass: "bg-green-500 text-white" };
+175 |   }
+176 | 
+177 |   const timeUntil = start - current;
+178 |   return timeUntil <= 30 && timeUntil > 0
+179 |     ? { label: "About to start", colorClass: "bg-blue-500 text-white" }
+180 |     : { label: "Closed", colorClass: "bg-gray-500 text-white" };
+181 | }
 ```
 
 src/lib/main.tsx
 ```
-1 | "use client";
+1 | // src/pages/TimeZoneDataTable.tsx
 2 | 
-3 | import * as React from "react";
-4 | import { zodResolver } from "@hookform/resolvers/zod";
-5 | import { useForm } from "react-hook-form";
-6 | import { z } from "zod";
-7 | import {
-8 |   ColumnDef,
-9 |   flexRender,
-10 |   getCoreRowModel,
-11 |   getFilteredRowModel,
-12 |   getPaginationRowModel,
-13 |   getSortedRowModel,
-14 |   SortingState,
-15 |   ColumnFiltersState,
-16 |   VisibilityState,
-17 |   useReactTable,
-18 | } from "@tanstack/react-table";
-19 | import {
-20 |   Table,
-21 |   TableBody,
-22 |   TableCell,
-23 |   TableHead,
-24 |   TableHeader,
-25 |   TableRow,
-26 | } from "@/components/ui/table";
-27 | import { Button } from "@/components/ui/button";
-28 | import { Star, StarOff } from "lucide-react";
-29 | import {
-30 |   computeZoneTime,
-31 |   countryNames,
-32 |   getStatus,
-33 |   TimeZone,
-34 |   timeZones,
-35 | } from "./constants";
-36 | 
-37 | import {
-38 |   Form,
-39 |   FormControl,
-40 |   FormDescription,
-41 |   FormField,
-42 |   FormItem,
-43 |   FormLabel,
-44 |   FormMessage,
-45 | } from "@/components/ui/form";
-46 | import { Input } from "@/components/ui/input";
-47 | 
-48 | type Language = "en" | "zh" | "ja";
+3 | "use client";
+4 | 
+5 | import React, { useState, useEffect } from "react";
+6 | import { zodResolver } from "@hookform/resolvers/zod";
+7 | import { useForm } from "react-hook-form";
+8 | import { z } from "zod";
+9 | import {
+10 |   ColumnDef,
+11 |   flexRender,
+12 |   getCoreRowModel,
+13 |   getFilteredRowModel,
+14 |   getPaginationRowModel,
+15 |   getSortedRowModel,
+16 |   SortingState,
+17 |   ColumnFiltersState,
+18 |   VisibilityState,
+19 |   useReactTable,
+20 | } from "@tanstack/react-table";
+21 | import {
+22 |   Table,
+23 |   TableBody,
+24 |   TableCell,
+25 |   TableHead,
+26 |   TableHeader,
+27 |   TableRow,
+28 | } from "../components/ui/table";
+29 | import { Button } from "../components/ui/button";
+30 | import { Star, StarOff } from "lucide-react";
+31 | import {
+32 |   computeZoneTime,
+33 |   countryNames,
+34 |   getStatus,
+35 |   TimeZone,
+36 |   timeZones,
+37 | } from "../lib/constants";
+38 | import {
+39 |   Form,
+40 |   FormControl,
+41 |   FormDescription,
+42 |   FormField,
+43 |   FormItem,
+44 |   FormLabel,
+45 |   FormMessage,
+46 | } from "../components/ui/form";
+47 | import { Input } from "../components/ui/input";
+48 | import ScheduleProposal from "./components/ScheduleProposal";
 49 | 
-50 | const translations: Record<Language, Record<string, string>> = {
-51 |   en: {
-52 |     country: "Country",
-53 |     timezone: "Time Zone",
-54 |     code: "Code",
-55 |     start: "Start Time",
-56 |     end: "End Time",
-57 |     current: "Current Time",
-58 |     title: "When They Work",
-59 |     enterTime: "Enter ISO Time",
-60 |     errorIsoTime:
-61 |       "Invalid ISO 8601 string. Please use a format like 2023-01-01T12:00:00Z or 2023-01-01T12:00:00+09:00.",
-62 |   },
-63 |   zh: {
-64 |     country: "国家",
-65 |     timezone: "时区",
-66 |     code: "代码",
-67 |     start: "工作开始时间",
-68 |     end: "工作结束时间",
-69 |     current: "当前时间",
-70 |     title: "他们的工作时间",
-71 |     enterTime: "输入ISO时间",
-72 |     errorIsoTime:
-73 |       "无效的ISO 8601字符串。请使用类似 2023-01-01T12:00:00Z 或 2023-01-01T12:00:00+09:00 的格式。",
-74 |   },
-75 |   ja: {
-76 |     country: "国",
-77 |     timezone: "タイムゾーン",
-78 |     code: "コード",
-79 |     start: "勤務開始時間",
-80 |     end: "勤務終了時間",
-81 |     current: "現在の時間",
-82 |     title: "彼らの勤務時間",
-83 |     enterTime: "ISO時間を入力",
-84 |     errorIsoTime:
-85 |       "無効なISO 8601文字列です。例えば 2023-01-01T12:00:00Z または 2023-01-01T12:00:00+09:00 のような形式を使用してください。",
-86 |   },
-87 | };
-88 | 
-89 | export function TimeZoneDataTable() {
-90 |   const [referenceDate, setReferenceDate] = React.useState<Date>(new Date());
-91 |   const [language, setLanguage] = React.useState<Language>("en");
-92 |   const [sorting, setSorting] = React.useState<SortingState>([]);
-93 |   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-94 |     []
-95 |   );
-96 |   const [columnVisibility, setColumnVisibility] =
-97 |     React.useState<VisibilityState>({});
-98 |   const [favorites, setFavorites] = React.useState<Set<string>>(new Set());
-99 |   const [isoInput, setIsoInput] = React.useState<string>("");
-100 | 
-101 |   React.useEffect(() => {
-102 |     const storedFavorites = localStorage.getItem("favorites");
-103 |     if (storedFavorites) {
-104 |       setFavorites(new Set(JSON.parse(storedFavorites)));
-105 |     }
-106 |   }, []);
-107 | 
-108 |   React.useEffect(() => {
-109 |     localStorage.setItem("favorites", JSON.stringify(Array.from(favorites)));
-110 |   }, [favorites]);
+50 | type Language = "en" | "zh" | "ja";
+51 | 
+52 | const translations: Record<Language, Record<string, string>> = {
+53 |   en: {
+54 |     country: "Country",
+55 |     timezone: "Time Zone",
+56 |     code: "Code",
+57 |     start: "Start Time",
+58 |     end: "End Time",
+59 |     current: "Current Time",
+60 |     title: "When They Work",
+61 |     enterTime: "Enter ISO Time",
+62 |     errorIsoTime:
+63 |       "Invalid ISO 8601 string. Please use a format like 2023-01-01T12:00:00Z or 2023-01-01T12:00:00+09:00.",
+64 |     scheduleProposals: "Meeting Proposals",
+65 |     showScheduler: "Show Schedule Planner",
+66 |     hideScheduler: "Hide Schedule Planner",
+67 |     noZonesSelected: "Select time zones to view schedule proposals",
+68 |     timelineLabel: "Explore dates up to 1 month ahead",
+69 |     daysAhead: "days from now",
+70 |     selectedMeetingTime: "Selected Meeting Time",
+71 |   },
+72 |   zh: {
+73 |     country: "国家",
+74 |     timezone: "时区",
+75 |     code: "代码",
+76 |     start: "工作开始时间",
+77 |     end: "工作结束时间",
+78 |     current: "当前时间",
+79 |     title: "他们的工作时间",
+80 |     enterTime: "输入ISO时间",
+81 |     errorIsoTime:
+82 |       "无效的ISO 8601字符串。请使用类似 2023-01-01T12:00:00Z 或 2023-01-01T12:00:00+09:00 的格式。",
+83 |     scheduleProposals: "会议建议时间",
+84 |     showScheduler: "显示日程计划",
+85 |     hideScheduler: "隐藏日程计划",
+86 |     noZonesSelected: "选择时区以查看日程建议",
+87 |     timelineLabel: "探索未来一个月内的日期",
+88 |     daysAhead: "天后",
+89 |     selectedMeetingTime: "选定会议时间",
+90 |   },
+91 |   ja: {
+92 |     country: "国",
+93 |     timezone: "タイムゾーン",
+94 |     code: "コード",
+95 |     start: "勤務開始時間",
+96 |     end: "勤務終了時間",
+97 |     current: "現在の時間",
+98 |     title: "彼らの勤務時間",
+99 |     enterTime: "ISO時間を入力",
+100 |     errorIsoTime:
+101 |       "無効なISO 8601文字列です。例えば 2023-01-01T12:00:00Z または 2023-01-01T12:00:00+09:00 のような形式を使用してください。",
+102 |     scheduleProposals: "会議の提案時間",
+103 |     showScheduler: "スケジュールプランナーを表示",
+104 |     hideScheduler: "スケジュールプランナーを非表示",
+105 |     noZonesSelected: "スケジュール提案を見るにはタイムゾーンを選択してください",
+106 |     timelineLabel: "最大1か月先までの日付を探索",
+107 |     daysAhead: "日後",
+108 |     selectedMeetingTime: "選択した会議時間",
+109 |   },
+110 | };
 111 | 
-112 |   React.useEffect(() => {
-113 |     if (!isoInput) {
-114 |       const timer = setInterval(() => {
-115 |         setReferenceDate(new Date());
-116 |       }, 60000);
-117 |       return () => clearInterval(timer);
-118 |     }
-119 |   }, [isoInput]);
-120 | 
-121 |   const t = translations[language];
-122 | 
-123 |   const toggleFavorite = (country: string) => {
-124 |     setFavorites((prev) => {
-125 |       const updated = new Set(prev);
-126 |       if (updated.has(country)) {
-127 |         updated.delete(country);
-128 |       } else {
-129 |         updated.add(country);
-130 |       }
-131 |       return updated;
-132 |     });
-133 |   };
-134 | 
-135 |   const columns = React.useMemo<ColumnDef<TimeZone>[]>(
-136 |     () => [
-137 |       {
-138 |         id: "favorite",
-139 |         header: "",
-140 |         cell: ({ row }) => {
-141 |           const zone = row.original;
-142 |           const isFav = favorites.has(zone.country);
-143 |           return (
-144 |             <button onClick={() => toggleFavorite(zone.country)}>
-145 |               {isFav ? (
-146 |                 <Star className="text-yellow-500" />
-147 |               ) : (
-148 |                 <StarOff className="text-gray-400" />
-149 |               )}
-150 |             </button>
-151 |           );
-152 |         },
-153 |         size: 50,
-154 |         enableSorting: true,
-155 |         enableFiltering: true,
-156 |       },
-157 |       {
-158 |         id: "country",
-159 |         header: t.country,
-160 |         accessorFn: (row: TimeZone) => {
-161 |           const info = countryNames[row.country];
-162 |           return info ? info[language] || row.country : row.country;
-163 |         },
-164 |         enableSorting: true,
-165 |         cell: ({ getValue }) => getValue(),
-166 |         enableFiltering: true,
-167 |       },
-168 |       {
-169 |         accessorKey: "utc",
-170 |         header: t.timezone,
-171 |         enableSorting: true,
-172 |         enableFiltering: true,
-173 |       },
-174 |       {
-175 |         accessorKey: "code",
-176 |         header: t.code,
-177 |         enableSorting: true,
-178 |         enableFiltering: true,
-179 |       },
-180 |       {
-181 |         accessorKey: "startTime",
-182 |         header: t.start,
-183 |         enableSorting: true,
-184 |         enableFiltering: true,
-185 |       },
-186 |       {
-187 |         accessorKey: "endTime",
-188 |         header: t.end,
-189 |         enableSorting: true,
-190 |         enableFiltering: true,
-191 |       },
-192 |       {
-193 |         id: "currentTime",
-194 |         header: t.current,
-195 |         cell: ({ row }) => {
-196 |           const zone = row.original;
-197 |           return computeZoneTime(zone.utc, referenceDate);
-198 |         },
-199 |         enableSorting: true,
-200 |         enableFiltering: true,
-201 |       },
-202 |       {
-203 |         id: "status",
-204 |         header: "Status",
-205 |         cell: ({ row }) => {
-206 |           const zone = row.original;
-207 |           const current = computeZoneTime(zone.utc, referenceDate);
-208 |           const status = getStatus(zone, current);
-209 |           return (
-210 |             <span
-211 |               className={`px-2 py-1 rounded-full text-sm ${status.colorClass}`}
-212 |             >
-213 |               {status.label}
-214 |             </span>
-215 |           );
-216 |         },
-217 |         enableSorting: true,
-218 |         enableFiltering: true,
-219 |       },
-220 |     ],
-221 |     [t, referenceDate, favorites, language]
-222 |   );
-223 | 
-224 |   const table = useReactTable({
-225 |     data: timeZones,
-226 |     columns,
-227 |     initialState: {
-228 |       pagination: { pageSize: 15 }, // Set page size to 100
-229 |     },
-230 |     state: {
-231 |       sorting,
-232 |       columnFilters,
-233 |       columnVisibility,
-234 |     },
-235 |     onSortingChange: setSorting,
-236 |     onColumnFiltersChange: setColumnFilters,
-237 |     onColumnVisibilityChange: setColumnVisibility,
-238 |     getCoreRowModel: getCoreRowModel(),
-239 |     getFilteredRowModel: getFilteredRowModel(),
-240 |     getPaginationRowModel: getPaginationRowModel(),
-241 |     getSortedRowModel: getSortedRowModel(),
-242 |   });
-243 | 
-244 |   // Dynamically create Zod schema with localized error message based on language
-245 |   const ISOTimeSchema = React.useMemo(() => {
-246 |     return z.object({
-247 |       isoTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
-248 |         message: t.errorIsoTime,
-249 |       }),
-250 |     });
-251 |   }, [t]);
-252 | 
-253 |   // Setup React Hook Form with dynamic resolver
-254 |   const form = useForm<z.infer<typeof ISOTimeSchema>>({
-255 |     resolver: zodResolver(ISOTimeSchema),
-256 |     defaultValues: {
-257 |       isoTime: new Date().toISOString(),
-258 |     },
-259 |   });
-260 | 
-261 |   function onIsoTimeSubmit(data: z.infer<typeof ISOTimeSchema>) {
-262 |     const { isoTime } = data;
-263 |     setIsoInput(isoTime);
-264 |     const parsedDate = new Date(isoTime);
-265 |     setReferenceDate(parsedDate);
-266 |     form.reset();
-267 |   }
+112 | export const TimeZoneDataTable: React.FC = () => {
+113 |   const [referenceDate, setReferenceDate] = useState<Date>(new Date());
+114 |   const [language, setLanguage] = useState<Language>("en");
+115 |   const [sorting, setSorting] = useState<SortingState>([]);
+116 |   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+117 |   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+118 |   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+119 |   const [isoInput, setIsoInput] = useState<string>("");
+120 |   const [selectedMeetingTime, setSelectedMeetingTime] =
+121 |     useState<string>("12:00"); // Default meeting time
+122 |   const [rowSelection, setRowSelection] = useState({});
+123 | 
+124 |   // Load favorites from localStorage
+125 |   useEffect(() => {
+126 |     const storedFavorites = localStorage.getItem("favorites");
+127 |     if (storedFavorites) {
+128 |       setFavorites(new Set(JSON.parse(storedFavorites)));
+129 |     }
+130 |   }, []);
+131 | 
+132 |   // Save favorites to localStorage
+133 |   useEffect(() => {
+134 |     localStorage.setItem("favorites", JSON.stringify(Array.from(favorites)));
+135 |   }, [favorites]);
+136 | 
+137 |   // Update referenceDate every minute if no ISO input
+138 |   useEffect(() => {
+139 |     if (!isoInput) {
+140 |       const timer = setInterval(() => {
+141 |         setReferenceDate(new Date());
+142 |       }, 60000);
+143 |       return () => clearInterval(timer);
+144 |     }
+145 |   }, [isoInput]);
+146 | 
+147 |   const t = translations[language];
+148 | 
+149 |   const toggleFavorite = (id: string) => {
+150 |     setFavorites((prev) => {
+151 |       const updated = new Set(prev);
+152 |       if (updated.has(id)) {
+153 |         updated.delete(id);
+154 |       } else {
+155 |         updated.add(id);
+156 |       }
+157 |       return updated;
+158 |     });
+159 |   };
+160 | 
+161 |   const Checkbox = ({
+162 |     checked,
+163 |     indeterminate,
+164 |     onChange,
+165 |   }: {
+166 |     checked: boolean;
+167 |     indeterminate: boolean;
+168 |     onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+169 |   }) => (
+170 |     <input
+171 |       type="checkbox"
+172 |       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+173 |       checked={checked}
+174 |       ref={(el) => el && (el.indeterminate = indeterminate)}
+175 |       onChange={onChange}
+176 |       aria-label="Select row"
+177 |     />
+178 |   );
+179 | 
+180 |   const columns = React.useMemo<ColumnDef<TimeZone>[]>(
+181 |     () => [
+182 |       // Selection column
+183 |       {
+184 |         id: "select",
+185 |         header: ({ table }) => (
+186 |           <Checkbox
+187 |             checked={table.getIsAllRowsSelected()}
+188 |             indeterminate={table.getIsSomeRowsSelected()}
+189 |             onChange={(e) => table.getToggleAllRowsSelectedHandler()(e)}
+190 |           />
+191 |         ),
+192 |         cell: ({ row }) => (
+193 |           <Checkbox
+194 |             checked={row.getIsSelected()}
+195 |             indeterminate={row.getIsSomeSelected()}
+196 |             onChange={row.getToggleSelectedHandler()}
+197 |           />
+198 |         ),
+199 |         size: 40,
+200 |       },
+201 |       {
+202 |         id: "favorite",
+203 |         header: "",
+204 |         cell: ({ row }) => {
+205 |           const zone = row.original;
+206 |           const isFav = favorites.has(zone.id);
+207 |           return (
+208 |             <button
+209 |               onClick={(e) => {
+210 |                 e.stopPropagation();
+211 |                 toggleFavorite(zone.id);
+212 |               }}
+213 |               aria-label={isFav ? "Unfavorite" : "Favorite"}
+214 |             >
+215 |               {isFav ? (
+216 |                 <Star className="text-yellow-500" />
+217 |               ) : (
+218 |                 <StarOff className="text-gray-400" />
+219 |               )}
+220 |             </button>
+221 |           );
+222 |         },
+223 |         size: 50,
+224 |         enableSorting: true,
+225 |         enableFiltering: true,
+226 |       },
+227 |       {
+228 |         id: "country",
+229 |         header: t.country,
+230 |         accessorFn: (row: TimeZone) => {
+231 |           const info = countryNames[row.country];
+232 |           return info ? info[language] || row.country : row.country;
+233 |         },
+234 |         enableSorting: true,
+235 |         cell: ({ getValue }) => getValue(),
+236 |         enableFiltering: true,
+237 |       },
+238 |       {
+239 |         accessorKey: "utc",
+240 |         header: t.timezone,
+241 |         enableSorting: true,
+242 |         enableFiltering: true,
+243 |       },
+244 |       {
+245 |         accessorKey: "code",
+246 |         header: t.code,
+247 |         enableSorting: true,
+248 |         enableFiltering: true,
+249 |       },
+250 |       {
+251 |         accessorKey: "startTime",
+252 |         header: t.start,
+253 |         enableSorting: true,
+254 |         enableFiltering: true,
+255 |       },
+256 |       {
+257 |         accessorKey: "endTime",
+258 |         header: t.end,
+259 |         enableSorting: true,
+260 |         enableFiltering: true,
+261 |       },
+262 |       {
+263 |         id: "currentTime",
+264 |         header: t.current,
+265 |         cell: ({ row }) => {
+266 |           const zone = row.original;
+267 |           const date = computeZoneTime(zone.utc, referenceDate);
 268 | 
-269 |   return (
-270 |     <div className="container mx-auto p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
-271 |       <div className="flex justify-between items-center mb-4">
-272 |         <h1 className="text-2xl font-bold">{t.title}</h1>
-273 |         <select
-274 |           value={language}
-275 |           onChange={(e) => setLanguage(e.target.value as Language)}
-276 |           className="border p-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-277 |         >
-278 |           <option value="en">English</option>
-279 |           <option value="zh">中文</option>
-280 |           <option value="ja">日本語</option>
-281 |         </select>
-282 |       </div>
-283 | 
-284 |       {/* ISO Time Form */}
-285 |       <Form {...form}>
-286 |         <form
-287 |           onSubmit={form.handleSubmit(onIsoTimeSubmit)}
-288 |           className="w-2/3 space-y-6 mb-4"
-289 |         >
-290 |           <FormField
-291 |             control={form.control}
-292 |             name="isoTime"
-293 |             render={({ field }) => (
-294 |               <FormItem>
-295 |                 <FormLabel>{t.enterTime}</FormLabel>
-296 |                 <FormControl>
-297 |                   <Input {...field} />
-298 |                 </FormControl>
-299 |                 <FormDescription>{t.enterTime}</FormDescription>
-300 |                 <FormMessage />
-301 |               </FormItem>
-302 |             )}
-303 |           />
-304 |           <Button type="submit">Set Time</Button>
-305 |         </form>
-306 |       </Form>
+269 |           // Return fallback if invalid date
+270 |           if (isNaN(date.getTime())) return "Invalid time";
+271 | 
+272 |           // Format based on language
+273 |           return date.toLocaleTimeString(language, {
+274 |             hour: "2-digit",
+275 |             minute: "2-digit",
+276 |             hour12: language === "en", // Use AM/PM only for English
+277 |           });
+278 |         },
+279 |         enableSorting: true,
+280 |         enableFiltering: true,
+281 |       },
+282 |       {
+283 |         id: "status",
+284 |         header: "Status",
+285 |         cell: ({ row }) => {
+286 |           const zone = row.original;
+287 |           const status = getStatus(zone, referenceDate);
+288 |           return (
+289 |             <span
+290 |               className={`px-2 py-1 rounded-full text-sm ${status.colorClass}`}
+291 |             >
+292 |               {status.label}
+293 |             </span>
+294 |           );
+295 |         },
+296 |         enableSorting: true,
+297 |         enableFiltering: true,
+298 |       },
+299 |     ],
+300 |     [t, referenceDate, favorites, language]
+301 |   );
+302 | 
+303 |   const table = useReactTable({
+304 |     data: timeZones,
+305 |     columns,
+306 |     getRowId: (row) => row.id, // Use nanoid-generated ID
 307 | 
-308 |       <div className="flex items-center py-4">
-309 |         <Input
-310 |           placeholder="Filter country..."
-311 |           value={(table.getColumn("country")?.getFilterValue() as string) ?? ""}
-312 |           onChange={(e) =>
-313 |             table.getColumn("country")?.setFilterValue(e.target.value)
-314 |           }
-315 |           className="max-w-sm"
-316 |         />
-317 |       </div>
-318 |       <div className="rounded-md border overflow-auto">
-319 |         <Table>
-320 |           <TableHeader>
-321 |             {table.getHeaderGroups().map((headerGroup) => (
-322 |               <TableRow key={headerGroup.id}>
-323 |                 {headerGroup.headers.map((header) => (
-324 |                   <TableHead key={header.id} className="px-4 py-2">
-325 |                     {flexRender(
-326 |                       header.column.columnDef.header,
-327 |                       header.getContext()
-328 |                     )}
-329 |                   </TableHead>
-330 |                 ))}
-331 |               </TableRow>
-332 |             ))}
-333 |           </TableHeader>
-334 |           <TableBody>
-335 |             {table.getRowModel().rows.length ? (
-336 |               table.getRowModel().rows.map((row) => (
-337 |                 <TableRow key={row.id}>
-338 |                   {row.getVisibleCells().map((cell) => (
-339 |                     <TableCell key={cell.id} className="px-4 py-2">
-340 |                       {flexRender(
-341 |                         cell.column.columnDef.cell,
-342 |                         cell.getContext()
-343 |                       )}
-344 |                     </TableCell>
-345 |                   ))}
-346 |                 </TableRow>
-347 |               ))
-348 |             ) : (
-349 |               <TableRow>
-350 |                 <TableCell
-351 |                   colSpan={columns.length}
-352 |                   className="h-24 text-center"
-353 |                 >
-354 |                   No results.
-355 |                 </TableCell>
-356 |               </TableRow>
-357 |             )}
-358 |           </TableBody>
-359 |         </Table>
-360 |       </div>
-361 |       <div className="flex items-center justify-end space-x-2 py-4">
-362 |         <Button
-363 |           variant="outline"
-364 |           size="sm"
-365 |           onClick={() => table.previousPage()}
-366 |           disabled={!table.getCanPreviousPage()}
-367 |         >
-368 |           Previous
-369 |         </Button>
-370 |         <Button
-371 |           variant="outline"
-372 |           size="sm"
-373 |           onClick={() => table.nextPage()}
-374 |           disabled={!table.getCanNextPage()}
-375 |         >
-376 |           Next
-377 |         </Button>
-378 |       </div>
-379 |     </div>
-380 |   );
-381 | }
+308 |     initialState: {
+309 |       pagination: { pageSize: 15 },
+310 |     },
+311 |     state: {
+312 |       rowSelection,
+313 | 
+314 |       sorting,
+315 |       columnFilters,
+316 |       columnVisibility,
+317 |     },
+318 |     onRowSelectionChange: setRowSelection,
+319 | 
+320 |     onSortingChange: setSorting,
+321 |     onColumnFiltersChange: setColumnFilters,
+322 |     onColumnVisibilityChange: setColumnVisibility,
+323 |     getCoreRowModel: getCoreRowModel(),
+324 |     getFilteredRowModel: getFilteredRowModel(),
+325 |     getPaginationRowModel: getPaginationRowModel(),
+326 |     getSortedRowModel: getSortedRowModel(),
+327 |     enableRowSelection: true,
+328 |     enableMultiRowSelection: true,
+329 |   });
+330 | 
+331 |   const selectedTimeZones = table
+332 |     .getSelectedRowModel()
+333 |     .rows.map((row) => row.original);
+334 | 
+335 |   const ISOTimeSchema = React.useMemo(() => {
+336 |     return z.object({
+337 |       isoTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
+338 |         message: t.errorIsoTime,
+339 |       }),
+340 |     });
+341 |   }, [t]);
+342 | 
+343 |   const form = useForm<z.infer<typeof ISOTimeSchema>>({
+344 |     resolver: zodResolver(ISOTimeSchema),
+345 |     defaultValues: {
+346 |       isoTime: new Date().toISOString(),
+347 |     },
+348 |   });
+349 | 
+350 |   function onIsoTimeSubmit(data: z.infer<typeof ISOTimeSchema>) {
+351 |     const { isoTime } = data;
+352 |     setIsoInput(isoTime);
+353 |     const parsedDate = new Date(isoTime);
+354 |     setReferenceDate(parsedDate);
+355 |   }
+356 | 
+357 |   return (
+358 |     <div className="container mx-auto p-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+359 |       {/* Header */}
+360 |       <div className="flex justify-between items-center mb-6">
+361 |         <h1 className="text-3xl font-extrabold">{t.title}</h1>
+362 |         <div className="flex items-center space-x-4">
+363 |           <select
+364 |             value={language}
+365 |             onChange={(e) => setLanguage(e.target.value as Language)}
+366 |             className="border p-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+367 |             aria-label="Select Language"
+368 |           >
+369 |             <option value="en">English</option>
+370 |             <option value="zh">中文</option>
+371 |             <option value="ja">日本語</option>
+372 |           </select>
+373 |         </div>
+374 |       </div>
+375 | 
+376 |       {/* ISO Time Form */}
+377 |       <Form {...form}>
+378 |         <form
+379 |           onSubmit={form.handleSubmit(onIsoTimeSubmit)}
+380 |           className="w-full max-w-md space-y-6 mb-6"
+381 |         >
+382 |           <FormField
+383 |             control={form.control}
+384 |             name="isoTime"
+385 |             render={({ field }) => (
+386 |               <FormItem>
+387 |                 <FormLabel className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+388 |                   {t.enterTime}
+389 |                 </FormLabel>
+390 |                 <FormControl>
+391 |                   <Input
+392 |                     {...field}
+393 |                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+394 |                   />
+395 |                 </FormControl>
+396 |                 <FormDescription className="text-xs text-gray-500 dark:text-gray-400">
+397 |                   {t.enterTime}
+398 |                 </FormDescription>
+399 |                 <FormMessage className="text-sm text-red-500" />
+400 |               </FormItem>
+401 |             )}
+402 |           />
+403 |           <Button
+404 |             type="submit"
+405 |             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded"
+406 |           >
+407 |             Set Time
+408 |           </Button>
+409 |         </form>
+410 |       </Form>
+411 | 
+412 |       {/* Filter Input */}
+413 |       <div className="flex items-center py-4">
+414 |         <Input
+415 |           placeholder="Filter country..."
+416 |           value={(table.getColumn("country")?.getFilterValue() as string) ?? ""}
+417 |           onChange={(e) =>
+418 |             table.getColumn("country")?.setFilterValue(e.target.value)
+419 |           }
+420 |           className="max-w-sm"
+421 |           aria-label="Filter Country"
+422 |         />
+423 |       </div>
+424 | 
+425 |       {/* Data Table */}
+426 |       <div className="rounded-md border overflow-auto mb-6">
+427 |         <Table>
+428 |           <TableHeader>
+429 |             {table.getHeaderGroups().map((headerGroup) => (
+430 |               <TableRow key={headerGroup.id}>
+431 |                 {headerGroup.headers.map((header) => (
+432 |                   <TableHead
+433 |                     key={header.id}
+434 |                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+435 |                   >
+436 |                     {flexRender(
+437 |                       header.column.columnDef.header,
+438 |                       header.getContext()
+439 |                     )}
+440 |                   </TableHead>
+441 |                 ))}
+442 |               </TableRow>
+443 |             ))}
+444 |           </TableHeader>
+445 |           <TableBody>
+446 |             {table.getRowModel().rows.length ? (
+447 |               table.getRowModel().rows.map((row) => {
+448 |                 return (
+449 |                   <TableRow
+450 |                     key={row.id}
+451 |                     data-state={row.getIsSelected() && "selected"}
+452 |                     className={`${
+453 |                       row.getIsSelected()
+454 |                         ? "bg-blue-50 dark:bg-gray-700"
+455 |                         : "hover:bg-gray-100 dark:hover:bg-gray-800"
+456 |                     }`}
+457 |                   >
+458 |                     {row.getVisibleCells().map((cell) => (
+459 |                       <TableCell
+460 |                         key={cell.id}
+461 |                         className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+462 |                       >
+463 |                         {flexRender(
+464 |                           cell.column.columnDef.cell,
+465 |                           cell.getContext()
+466 |                         )}
+467 |                       </TableCell>
+468 |                     ))}
+469 |                   </TableRow>
+470 |                 );
+471 |               })
+472 |             ) : (
+473 |               <TableRow>
+474 |                 <TableCell
+475 |                   colSpan={columns.length}
+476 |                   className="px-6 py-4 text-center text-sm text-gray-500"
+477 |                 >
+478 |                   No results.
+479 |                 </TableCell>
+480 |               </TableRow>
+481 |             )}
+482 |           </TableBody>
+483 |         </Table>
+484 |       </div>
+485 | 
+486 |       {/* Pagination */}
+487 |       <div className="flex items-center justify-end space-x-2 py-4">
+488 |         <Button
+489 |           variant="outline"
+490 |           size="sm"
+491 |           onClick={() => table.previousPage()}
+492 |           disabled={!table.getCanPreviousPage()}
+493 |           aria-label="Previous Page"
+494 |         >
+495 |           Previous
+496 |         </Button>
+497 |         <Button
+498 |           variant="outline"
+499 |           size="sm"
+500 |           onClick={() => table.nextPage()}
+501 |           disabled={!table.getCanNextPage()}
+502 |           aria-label="Next Page"
+503 |         >
+504 |           Next
+505 |         </Button>
+506 |       </div>
+507 | 
+508 |       {/* Schedule Proposal Section */}
+509 |       {selectedTimeZones.length > 0 && (
+510 |         <div className="mt-8">
+511 |           <h2 className="text-2xl font-bold mb-4">{t.scheduleProposals}</h2>
+512 |           <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
+513 |             <span>
+514 |               {new Date(referenceDate).toLocaleDateString(language, {
+515 |                 month: "short",
+516 |                 day: "numeric",
+517 |               })}
+518 |             </span>
+519 |             <span>
+520 |               {new Date(
+521 |                 referenceDate.getTime() + 30 * 86400000
+522 |               ).toLocaleDateString(language, {
+523 |                 month: "short",
+524 |                 day: "numeric",
+525 |               })}
+526 |             </span>
+527 |           </div>
+528 |           <ScheduleProposal
+529 |             timeZones={selectedTimeZones}
+530 |             referenceDate={referenceDate}
+531 |             language={language}
+532 |             onTimeChange={(newTime) => setSelectedMeetingTime(newTime)}
+533 |           />
+534 |           {/* Display Selected Meeting Time */}
+535 |           <div className="text-center text-lg font-medium text-gray-800 dark:text-gray-200 mt-4">
+536 |             {language === "en"
+537 |               ? `Selected Meeting Time: ${selectedMeetingTime}`
+538 |               : language === "zh"
+539 |               ? `选定会议时间：${selectedMeetingTime}`
+540 |               : `選択した会議時間：${selectedMeetingTime}`}
+541 |           </div>
+542 |         </div>
+543 |       )}
+544 |     </div>
+545 |   );
+546 | };
+547 | 
+548 | export default TimeZoneDataTable;
 ```
 
 src/lib/types.ts
@@ -1241,6 +1438,38 @@ src/components/ui/card.tsx
 74 | CardFooter.displayName = "CardFooter"
 75 | 
 76 | export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+```
+
+src/components/ui/checkbox.tsx
+```
+1 | import * as React from "react"
+2 | import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
+3 | import { Check } from "lucide-react"
+4 | 
+5 | import { cn } from "@/lib/utils"
+6 | 
+7 | const Checkbox = React.forwardRef<
+8 |   React.ElementRef<typeof CheckboxPrimitive.Root>,
+9 |   React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>
+10 | >(({ className, ...props }, ref) => (
+11 |   <CheckboxPrimitive.Root
+12 |     ref={ref}
+13 |     className={cn(
+14 |       "peer h-4 w-4 shrink-0 rounded-sm border border-zinc-200 border-zinc-900 shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-zinc-900 data-[state=checked]:text-zinc-50 dark:border-zinc-800 dark:border-zinc-50 dark:focus-visible:ring-zinc-300 dark:data-[state=checked]:bg-zinc-50 dark:data-[state=checked]:text-zinc-900",
+15 |       className
+16 |     )}
+17 |     {...props}
+18 |   >
+19 |     <CheckboxPrimitive.Indicator
+20 |       className={cn("flex items-center justify-center text-current")}
+21 |     >
+22 |       <Check className="h-4 w-4" />
+23 |     </CheckboxPrimitive.Indicator>
+24 |   </CheckboxPrimitive.Root>
+25 | ))
+26 | Checkbox.displayName = CheckboxPrimitive.Root.displayName
+27 | 
+28 | export { Checkbox }
 ```
 
 src/components/ui/dialog.tsx
@@ -2002,4 +2231,210 @@ src/components/ui/textarea.tsx
 20 | Textarea.displayName = "Textarea"
 21 | 
 22 | export { Textarea }
+```
+
+src/lib/components/ScheduleProposal.tsx
+```
+1 | // src/components/ScheduleProposal.tsx
+2 | 
+3 | import React, { useState, useRef, useEffect, useCallback } from "react";
+4 | import {
+5 |   DndContext,
+6 |   PointerSensor,
+7 |   useSensor,
+8 |   useSensors,
+9 |   useDraggable,
+10 |   DragEndEvent,
+11 | } from "@dnd-kit/core";
+12 | import { TimeZone, computeZoneTime, countryNames } from "../constants";
+13 | 
+14 | interface ScheduleProposalProps {
+15 |   timeZones: TimeZone[];
+16 |   referenceDate?: Date; // Made optional to default to local time
+17 |   language: "en" | "zh" | "ja";
+18 |   onTimeChange?: (newTime: string) => void;
+19 | }
+20 | 
+21 | const ScheduleProposal: React.FC<ScheduleProposalProps> = ({
+22 |   timeZones,
+23 |   referenceDate = new Date(), // Default to current local time
+24 |   language,
+25 |   onTimeChange,
+26 | }) => {
+27 |   const [selectedTime, setSelectedTime] = useState<string>("12:00"); // Default selected time
+28 |   const timelineRef = useRef<HTMLDivElement>(null);
+29 | 
+30 |   const sensors = useSensors(useSensor(PointerSensor));
+31 | 
+32 |   // Obtain user's local time zone
+33 |   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+34 | 
+35 |   // Calculate the position for the draggable marker
+36 |   const calculateMarkerPosition = useCallback(() => {
+37 |     if (timelineRef.current) {
+38 |       const timelineWidth = timelineRef.current.offsetWidth;
+39 |       const [hours, minutes] = selectedTime.split(":").map(Number);
+40 |       const totalMinutes = hours * 60 + minutes;
+41 |       const position = (totalMinutes / (24 * 60)) * timelineWidth;
+42 |       return position;
+43 |     }
+44 |     return 0;
+45 |   }, [selectedTime]);
+46 | 
+47 |   const [markerX, setMarkerX] = useState<number>(calculateMarkerPosition());
+48 | 
+49 |   useEffect(() => {
+50 |     setMarkerX(calculateMarkerPosition());
+51 |   }, [selectedTime, referenceDate, calculateMarkerPosition]);
+52 | 
+53 |   const handleDragEnd = (event: DragEndEvent) => {
+54 |     if (timelineRef.current) {
+55 |       const timelineWidth = timelineRef.current.offsetWidth;
+56 |       let newMarkerX = markerX + event.delta.x;
+57 | 
+58 |       // Clamp the marker's position within the timeline
+59 |       newMarkerX = Math.max(0, Math.min(newMarkerX, timelineWidth));
+60 | 
+61 |       // Calculate the new time based on the clamped position
+62 |       const newTotalMinutes = Math.round(
+63 |         (newMarkerX / timelineWidth) * 24 * 60
+64 |       );
+65 |       const newHours = Math.floor(newTotalMinutes / 60);
+66 |       const newMinutes = newTotalMinutes % 60;
+67 |       const newTime = `${newHours.toString().padStart(2, "0")}:${newMinutes
+68 |         .toString()
+69 |         .padStart(2, "0")}`;
+70 | 
+71 |       setSelectedTime(newTime);
+72 |       if (onTimeChange) onTimeChange(newTime);
+73 |     }
+74 |   };
+75 | 
+76 |   useEffect(() => {
+77 |     if (onTimeChange) {
+78 |       onTimeChange(selectedTime);
+79 |     }
+80 |   }, [selectedTime, onTimeChange]);
+81 | 
+82 |   // Draggable Marker using @dnd-kit
+83 |   const DraggableMarker = () => {
+84 |     const { attributes, listeners, setNodeRef, transform } = useDraggable({
+85 |       id: "draggable-marker",
+86 |     });
+87 | 
+88 |     const timelineWidth = timelineRef.current?.offsetWidth || 0;
+89 |     const currentMarkerX = transform ? markerX + transform.x : markerX;
+90 | 
+91 |     // Clamp the marker's position within the timeline
+92 |     const clampedX = Math.max(0, Math.min(currentMarkerX, timelineWidth));
+93 | 
+94 |     return (
+95 |       <div
+96 |         ref={setNodeRef}
+97 |         style={{
+98 |           transform: `translateX(${clampedX}px)`,
+99 |         }}
+100 |         className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-20 cursor-pointer"
+101 |         aria-valuemin={0}
+102 |         aria-valuemax={24}
+103 |         aria-valuenow={parseInt(selectedTime.split(":")[0])}
+104 |         aria-label="Selected Meeting Time"
+105 |         {...listeners}
+106 |         {...attributes}
+107 |       >
+108 |         {/* Inverted Triangle Handle */}
+109 |         <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+110 |           <div
+111 |             className="w-0 h-0 border-l-4 border-r-4 border-t-6 border-l-transparent border-r-transparent border-t-red-500"
+112 |             style={{ transform: "rotate(180deg)" }}
+113 |           ></div>
+114 |         </div>
+115 |       </div>
+116 |     );
+117 |   };
+118 | 
+119 |   return (
+120 |     <div className="relative overflow-x-auto pb-4">
+121 |       {/* Timeline Header with Time Zone Label */}
+122 |       <div className="flex items-center justify-between mb-2">
+123 |         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+124 |           {language === "en"
+125 |             ? `Timeline (${userTimeZone})`
+126 |             : language === "zh"
+127 |             ? `时间线 (${userTimeZone})`
+128 |             : `タイムライン (${userTimeZone})`}
+129 |         </span>
+130 |       </div>
+131 |       <div className="w-full" ref={timelineRef}>
+132 |         {/* Horizontal Timeline */}
+133 |         <div className="flex items-center border-b bg-gray-50 dark:bg-gray-800 relative">
+134 |           <div className="w-32 flex-shrink-0"></div>
+135 |           {Array.from({ length: 24 }).map((_, i) => (
+136 |             <div
+137 |               key={i}
+138 |               className="flex-1 text-center p-2 border-l text-xs text-gray-500 truncate"
+139 |             >
+140 |               {`${i.toString().padStart(2, "0")}:00`}
+141 |             </div>
+142 |           ))}
+143 |         </div>
+144 | 
+145 |         {/* Time Zones Columns */}
+146 |         <div className="flex">
+147 |           <div className="w-32 flex-shrink-0"></div>
+148 |           {timeZones.map((zone) => {
+149 |             const [hours, minutes] = selectedTime.split(":").map(Number);
+150 |             const localDate = computeZoneTime(zone.utc, referenceDate);
+151 |             localDate.setHours(hours, minutes);
+152 | 
+153 |             const formattedTime = localDate.toLocaleTimeString(language, {
+154 |               hour: "2-digit",
+155 |               minute: "2-digit",
+156 |               hour12: language === "en",
+157 |               timeZone: zone.timeZone || "UTC", // Ensure computeZoneTime considers timeZone
+158 |             });
+159 | 
+160 |             return (
+161 |               <div
+162 |                 key={zone.id}
+163 |                 className="flex-1 border-l dark:border-gray-700 relative"
+164 |               >
+165 |                 {/* Time Zone Label */}
+166 |                 <div className="absolute top-0 left-0 w-full text-center p-2 bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
+167 |                   {countryNames[zone.country]?.[language] || zone.country}
+168 |                 </div>
+169 | 
+170 |                 {/* Local Time Display */}
+171 |                 <div className="mt-8 text-center text-sm text-gray-800 dark:text-gray-200">
+172 |                   {formattedTime} ({zone.countryCode})
+173 |                 </div>
+174 |               </div>
+175 |             );
+176 |           })}
+177 |         </div>
+178 |       </div>
+179 | 
+180 |       {/* Draggable Timeline Marker using @dnd-kit */}
+181 |       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+182 |         <DraggableMarker />
+183 |       </DndContext>
+184 | 
+185 |       {/* Legend */}
+186 |       <div className="mt-4 flex gap-4 text-sm">
+187 |         <div className="flex items-center gap-1">
+188 |           <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white" />
+189 |           <span className="text-gray-700 dark:text-gray-300">
+190 |             {language === "en"
+191 |               ? "Selected Time"
+192 |               : language === "zh"
+193 |               ? "选定时间"
+194 |               : "選択した時間"}
+195 |           </span>
+196 |         </div>
+197 |       </div>
+198 |     </div>
+199 |   );
+200 | };
+201 | 
+202 | export default ScheduleProposal;
 ```
